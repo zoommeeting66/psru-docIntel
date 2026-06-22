@@ -510,7 +510,7 @@ tailwind.config = {
 /* ตั้งค่า URL ของ Cloudflare Worker หลัง deploy เพื่อใช้ข้อมูลจริงจากฐานข้อมูล D1
  * ตัวอย่าง: const API_BASE = 'https://psru-docintel-api.<subdomain>.workers.dev';
  * ถ้าเว้นว่าง '' ระบบจะใช้ข้อมูลตัวอย่าง (mock) ในไฟล์นี้แทน */
-const API_BASE = '';
+const API_BASE = 'https://psru-docintel-api.psru.workers.dev';
 
 /* แปลงข้อมูลจาก API (D1, ปี ค.ศ.) -> โครงสร้างที่ frontend ใช้ (th-TH จะแสดงเป็น พ.ศ. ให้เอง) */
 function mapApiDoc(r){
