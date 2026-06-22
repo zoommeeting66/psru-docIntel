@@ -1,0 +1,18 @@
+{
+  "name": "psru-docintel-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PSRU DocIntel — Cloudflare Worker API (Documents + Search)",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:schema": "wrangler d1 execute psru-docintel --remote --file=./schema.sql",
+    "db:seed": "wrangler d1 execute psru-docintel --remote --file=./seed.sql",
+    "db:init": "npm run db:schema && npm run db:seed",
+    "db:schema:local": "wrangler d1 execute psru-docintel --local --file=./schema.sql",
+    "db:seed:local": "wrangler d1 execute psru-docintel --local --file=./seed.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}

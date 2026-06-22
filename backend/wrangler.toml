@@ -1,0 +1,12 @@
+name = "psru-docintel-api"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+# Cloudflare D1 database (สร้างจริงแล้วในบัญชีนี้)
+[[d1_databases]]
+binding = "DB"
+database_name = "psru-docintel"
+database_id = "8f703ec8-f778-444a-ba4a-abb625ae3002"
+
+[observability]
+enabled = true

@@ -506,7 +506,39 @@ tailwind.config = {
 </div>
 
 <script>
-/* ============================ MOCK DATA ============================ */
+/* ============================ API CONFIG ============================ */
+/* ตั้งค่า URL ของ Cloudflare Worker หลัง deploy เพื่อใช้ข้อมูลจริงจากฐานข้อมูล D1
+ * ตัวอย่าง: const API_BASE = 'https://psru-docintel-api.<subdomain>.workers.dev';
+ * ถ้าเว้นว่าง '' ระบบจะใช้ข้อมูลตัวอย่าง (mock) ในไฟล์นี้แทน */
+const API_BASE = '';
+
+/* แปลงข้อมูลจาก API (D1, ปี ค.ศ.) -> โครงสร้างที่ frontend ใช้ (th-TH จะแสดงเป็น พ.ศ. ให้เอง) */
+function mapApiDoc(r){
+  return {
+    id:r.id, title:r.title, type:r.document_type, number:r.document_number||'',
+    issue:r.issue_date||'', effective:r.effective_date||'', expired:r.expired_date||'',
+    org:r.organization||'', signer:r.signer||'', status:r.status||'active',
+    version:r.version||'1.0', category:r.category||'', risk:r.risk||'low',
+    views:r.views||0, tags:r.tags||[], abstract:r.abstract||'', related:r.related||[]
+  };
+}
+/* โหลดเอกสารจาก backend จริงมาแทนข้อมูลตัวอย่าง (ถ้าตั้ง API_BASE) */
+async function loadFromAPI(){
+  if(!API_BASE) return false;
+  try{
+    const res = await fetch(API_BASE.replace(/\/+$/,'') + '/api/documents');
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    if(Array.isArray(data) && data.length){
+      DOCS.length = 0;
+      data.forEach(r => DOCS.push(mapApiDoc(r)));
+      return true;
+    }
+  }catch(e){ console.warn('โหลดจาก API ไม่สำเร็จ ใช้ข้อมูลตัวอย่างแทน:', e.message); }
+  return false;
+}
+
+/* ============================ MOCK DATA (ใช้เมื่อยังไม่ตั้ง API_BASE) ============================ */
 const DOCS = [
   { id:'DOC-2569-014', title:'ระเบียบมหาวิทยาลัยราชภัฏพิบูลสงคราม ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุ (ฉบับที่ 2) พ.ศ. 2569',
     type:'ระเบียบ', number:'รบ.014/2569', issue:'2569-05-12', effective:'2569-06-01', expired:'', org:'กองคลัง', signer:'อธิการบดี',
@@ -569,11 +601,12 @@ const docById = id => DOCS.find(d=>d.id===id);
 const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 /* ============================ AUTH ============================ */
-function doLogin(){
+async function doLogin(){
   const role = document.getElementById('roleSelect').value;
   document.getElementById('roleLabel').textContent = role;
   document.getElementById('login').style.display='none';
   document.getElementById('app').classList.remove('hidden');
+  await loadFromAPI();   // ดึงข้อมูลจริงจาก backend ถ้าตั้งค่า API_BASE
   initAll();
 }
 function logout(){ document.getElementById('login').style.display='grid'; document.getElementById('app').classList.add('hidden'); }
