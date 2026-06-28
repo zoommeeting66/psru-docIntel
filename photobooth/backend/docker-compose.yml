@@ -1,0 +1,36 @@
+# Phase 1 stack: API + PostgreSQL + Redis.
+# For a zero-dependency run, skip compose and use SQLite (see README).
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: psru
+      POSTGRES_PASSWORD: psru
+      POSTGRES_DB: photobooth
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U psru"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://psru:psru@db:5432/photobooth
+      STORAGE_DIR: /app/data/storage
+      PUBLIC_BASE_URL: http://localhost:8000
+      PIPELINE_MOCK: "true"
+    ports: ["8000:8000"]
+    volumes: ["./data:/app/data"]
+
+volumes:
+  pgdata:
