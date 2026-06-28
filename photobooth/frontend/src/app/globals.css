@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: #f4f8f5;
+  color: #1e293b;
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/65 backdrop-blur border border-white/50;
+  }
+  .glass-dark {
+    background: rgba(6, 61, 38, 0.55);
+    @apply backdrop-blur border border-white/10;
+  }
+  .gradient-green {
+    background: linear-gradient(135deg, #0e7a4b 0%, #063d26 100%);
+  }
+  .gradient-gold {
+    background: linear-gradient(135deg, #c9a227 0%, #9c7d1d 100%);
+  }
+}
+
+.spinner {
+  width: 54px;
+  height: 54px;
+  border: 5px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #c9a227;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.fadein {
+  animation: fadeIn 0.35s ease;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
