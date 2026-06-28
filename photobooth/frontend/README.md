@@ -53,6 +53,9 @@ src/
 - **KioskFlow** เป็น state machine (step 1–5) จัดการ session/capture/job และติดตาม progress ผ่าน
   **WebSocket** (`WS /api/v1/ws/jobs/{id}`) อัปเดตสถานะรายขั้นแบบเรียลไทม์
   หาก WS ใช้ไม่ได้จะ **fallback เป็น polling `GET /jobs/{id}`** อัตโนมัติ
+- **Auth/RBAC:** `AuthProvider` (lib/auth.tsx) เก็บ token + แนบ bearer ให้ทุก request;
+  หน้า `/dashboard` มี `LoginCard` (เลือก role → dev-token) — kiosk ไม่ต้องล็อกอิน;
+  production เปลี่ยนเป็น Keycloak OIDC redirect
 - **กล้อง:** `getUserMedia` (ต้องการ localhost/HTTPS) — ถ้าเปิดไม่ได้จะ fallback เป็นภาพจำลองอัตโนมัติ
 - ภาพ output/QR เสิร์ฟจาก API โดยตรง (Phase 2: เปลี่ยนเป็น signed CDN URL)
 

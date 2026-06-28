@@ -62,15 +62,26 @@ backend/
 │   ├── db.py            # async engine/session, Base, helpers
 │   ├── models.py        # ORM (portable subset ของ schema.sql)
 │   ├── schemas.py       # Pydantic I/O
-│   ├── security.py      # JWT/RBAC (เตรียมเชื่อม Keycloak)
+│   ├── security.py      # OIDC(JWKS)/RBAC + dev HS256 fallback
+│   ├── events.py        # in-process pub/sub hub (WS progress)
 │   ├── storage.py       # storage abstraction (local → S3/R2 ใน prod)
 │   ├── branding.py      # Branding Engine (PIL: logo/frame/QR/watermark/หมายเลข)
 │   ├── pipeline.py      # AI Orchestrator (mock stages → real models ใน Phase 2)
 │   ├── seed.py          # ข้อมูลอ้างอิง (ฉาก/ชุด/แบรนด์/event)
-│   └── routers/         # health, sessions, scenes, jobs, outputs, stats
-├── tests/               # pytest (end-to-end)
+│   └── routers/         # health, auth, admin, sessions, scenes, jobs, outputs, stats, ws
+├── keycloak/realm-export.json   # realm psru + demo users (admin/operator/executive)
+├── tests/               # pytest (flow + ws + auth/RBAC)
 ├── Dockerfile · docker-compose.yml · requirements.txt · pyproject.toml
 ```
+
+## Auth & RBAC
+
+- **Dev (ค่าเริ่มต้น):** `POST /api/v1/auth/dev-token {role}` ออก HS256 token (ไม่ต้องมี Keycloak)
+- **Production:** ตั้ง `OIDC_ISSUER` → ระบบ validate RS256 ผ่าน JWKS ของ Keycloak (ตรวจ iss/aud,
+  อ่าน role จาก `realm_access.roles`)
+- **กติกา RBAC:** kiosk flow (session/capture/job/output) เปิดสาธารณะ ·
+  `/stats/*` ต้องเป็น `executive` (admin ผ่านได้) · `/admin/*` ต้องเป็น `admin`
+- รัน Keycloak จริง: `docker compose up keycloak` (admin console :8080, ผู้ใช้เดโม admin/operator/executive รหัส = ชื่อผู้ใช้)
 
 ## Mapping กับ API Spec
 ตรงตาม [`../docs/03-api-specification.md`](../docs/03-api-specification.md) และ [`../openapi.yaml`](../openapi.yaml)
@@ -78,6 +89,6 @@ backend/
 
 ## สิ่งที่ต่อใน Phase 2
 - สลับ stage ใน `pipeline.py` → โมเดลจริงผ่าน **Triton**, ใช้ **Redis/Celery** เป็น queue จริง (ปัจจุบันใช้ FastAPI BackgroundTasks)
-- เชื่อม **Keycloak (OIDC)** ใน `security.py` + บังคับ MFA สำหรับ admin
+- ~~เชื่อม Keycloak (OIDC) + RBAC~~ ✅ ทำแล้ว (security.py + `/auth` + `/admin`, realm import); เหลือ **บังคับ MFA สำหรับ admin** + production hardening
 - ย้าย storage → **S3/R2** + signed URL, ใช้ `schema.sql` (pgvector) + Alembic migrations
 - ~~WebSocket job progress~~ ✅ ทำแล้ว: `WS /api/v1/ws/jobs/{id}` (in-process hub + DB self-heal; frontend ใช้ WS, มี poll เป็น fallback) — Phase 2 เปลี่ยน hub → Redis pub/sub

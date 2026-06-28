@@ -125,11 +125,21 @@ try {
   await page.locator("button:has(i.fa-star)").nth(4).click();
   await page.screenshot({ path: `${ART}05-result.png`, fullPage: true });
 
-  // ---------- Dashboard reflects the new image ----------
-  console.log("DASHBOARD — stats from API");
+  // ---------- Dashboard (RBAC: requires login) ----------
+  console.log("DASHBOARD — login (executive) then stats from API");
   await page.goto(`${FE}/dashboard`, { waitUntil: "networkidle" });
+  // RBAC gate: the LoginCard must be shown before authenticating
+  await check(
+    "dashboard gated by login (RBAC)",
+    await page
+      .getByRole("heading", { name: "เข้าสู่ระบบ" })
+      .isVisible()
+      .catch(() => false),
+  );
+  await page.getByRole("button", { name: /Executive/ }).click();
   const label = page.getByText("ภาพที่สร้าง", { exact: true });
   await label.waitFor({ timeout: 8000 });
+  await check("logged-in role chip shown", await page.getByText("executive").first().isVisible());
   const imagesCard = await page
     .locator("div.glass")
     .filter({ has: label })

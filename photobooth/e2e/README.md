@@ -11,7 +11,8 @@ live frontend (`:3000`) + Core API (`:8000`), then checks the Executive dashboar
 4. **Render** — render step shows while progress streams over **WebSocket** (`/ws/jobs/{id}`)
 5. **Result** — the real **API-served image renders** (`naturalWidth > 0`) and the **QR** is shown;
    asserts a WebSocket was opened and delivered a terminal frame; rate 5★ (fires feedback)
-6. **Dashboard** — `/stats` reflects `images_total ≥ 1`
+6. **Dashboard (RBAC)** — `/dashboard` is gated by a login card; logs in as
+   **executive** (dev-token), then `/stats` reflects `images_total ≥ 1`
 
 Screenshots are written to `artifacts/` (git-ignored).
 

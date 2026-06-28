@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ApiBadge } from "./ApiBadge";
+import { AuthControls } from "./AuthControls";
 
 const nav = [
   { href: "/kiosk", label: "Kiosk", icon: "fa-camera-retro" },
@@ -34,7 +35,10 @@ export function Header() {
             </Link>
           ))}
         </nav>
-        <ApiBadge />
+        <div className="flex items-center gap-2">
+          <ApiBadge />
+          <AuthControls />
+        </div>
       </div>
     </header>
   );

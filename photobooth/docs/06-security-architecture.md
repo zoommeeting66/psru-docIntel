@@ -43,6 +43,11 @@ flowchart TB
 - **Kiosk** ใช้ device-bound token (หมุนเวียน), ล็อกเครื่องแบบ kiosk lockdown
 - **RBAC** ตรวจที่ API Gateway + service ระดับ permission key (จาก `roles.permissions`)
 
+> **สถานะการพัฒนา:** ใช้งานจริงแล้วใน backend (`app/security.py`) — validate RS256 ผ่าน Keycloak
+> JWKS เมื่อตั้ง `OIDC_ISSUER` (อ่าน role จาก `realm_access.roles`) และมี dev-mode (HS256) สำหรับรัน/เทสต์
+> โดยไม่ต้องมี Keycloak · บังคับ RBAC: kiosk สาธารณะ · `/stats/*`=executive · `/admin/*`=admin ·
+> มี realm import (`backend/keycloak/realm-export.json`) + ผู้ใช้เดโม · **ยังเหลือบังคับ MFA สำหรับ admin**
+
 ## 6.3 PDPA Compliance (พ.ร.บ.คุ้มครองข้อมูลส่วนบุคคล)
 
 | หลักการ PDPA | การปฏิบัติในระบบ |

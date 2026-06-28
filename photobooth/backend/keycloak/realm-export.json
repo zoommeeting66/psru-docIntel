@@ -1,0 +1,55 @@
+{
+  "realm": "psru",
+  "enabled": true,
+  "displayName": "PSRU Photo Booth",
+  "sslRequired": "none",
+  "roles": {
+    "realm": [
+      { "name": "admin", "description": "ผู้ดูแลระบบ" },
+      { "name": "operator", "description": "เจ้าหน้าที่บูธ" },
+      { "name": "executive", "description": "ผู้บริหาร (ดู dashboard)" },
+      { "name": "user", "description": "ผู้ใช้ทั่วไป" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "photobooth-spa",
+      "name": "PSRU Photo Booth SPA",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"],
+      "attributes": { "pkce.code.challenge.method": "S256" }
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "email": "admin@psru.ac.th",
+      "emailVerified": true,
+      "firstName": "PSRU",
+      "lastName": "Admin",
+      "credentials": [{ "type": "password", "value": "admin", "temporary": false }],
+      "realmRoles": ["admin"]
+    },
+    {
+      "username": "operator",
+      "enabled": true,
+      "email": "operator@psru.ac.th",
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "operator", "temporary": false }],
+      "realmRoles": ["operator"]
+    },
+    {
+      "username": "executive",
+      "enabled": true,
+      "email": "executive@psru.ac.th",
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "executive", "temporary": false }],
+      "realmRoles": ["executive"]
+    }
+  ]
+}

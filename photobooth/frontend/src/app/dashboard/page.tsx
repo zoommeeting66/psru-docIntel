@@ -2,20 +2,31 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { PopularScene, StatsOverview } from "@/lib/types";
+import { useAuth } from "@/lib/auth";
+import { LoginCard } from "@/components/LoginCard";
 
 export default function DashboardPage() {
+  const { token, ready } = useAuth();
   const [stats, setStats] = useState<StatsOverview | null>(null);
   const [scenes, setScenes] = useState<PopularScene[]>([]);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!token) return;
     Promise.all([api.statsOverview(), api.popularScenes()])
       .then(([s, p]) => {
         setStats(s);
         setScenes(p);
       })
       .catch((e) => setErr(e.message));
-  }, []);
+  }, [token]);
+
+  // RBAC gate: dashboard requires authentication (executive/admin)
+  if (!ready) return null;
+  if (!token)
+    return (
+      <LoginCard note="Executive Dashboard ต้องเข้าสู่ระบบ (executive หรือ admin)" />
+    );
 
   const kpis = stats
     ? [

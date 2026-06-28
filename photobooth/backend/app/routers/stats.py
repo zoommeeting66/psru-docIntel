@@ -5,8 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..db import get_db
 from ..models import Download, Feedback, Output, RenderJob, Session
 from ..schemas import StatsOverview
+from ..security import require_role
 
-router = APIRouter(tags=["Stats"])
+# Dashboards are restricted to executives (admin bypasses via require()).
+router = APIRouter(tags=["Stats"], dependencies=[Depends(require_role("executive"))])
 
 
 @router.get("/stats/overview", response_model=StatsOverview)

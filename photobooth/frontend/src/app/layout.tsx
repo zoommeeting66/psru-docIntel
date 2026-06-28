@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Sarabun } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
+import { AuthProvider } from "@/lib/auth";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -34,12 +35,14 @@ export default function RootLayout({
         />
       </head>
       <body className="font-thai antialiased">
-        <Header />
-        <main className="max-w-[1500px] mx-auto px-4 py-6">{children}</main>
-        <footer className="max-w-[1500px] mx-auto px-4 py-6 text-center text-[11px] text-psru-muted">
-          © 2569 มหาวิทยาลัยราชภัฏพิบูลสงคราม · PSRU AI Virtual Photo Booth & VR
-          Studio
-        </footer>
+        <AuthProvider>
+          <Header />
+          <main className="max-w-[1500px] mx-auto px-4 py-6">{children}</main>
+          <footer className="max-w-[1500px] mx-auto px-4 py-6 text-center text-[11px] text-psru-muted">
+            © 2569 มหาวิทยาลัยราชภัฏพิบูลสงคราม · PSRU AI Virtual Photo Booth &
+            VR Studio
+          </footer>
+        </AuthProvider>
       </body>
     </html>
   );

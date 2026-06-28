@@ -25,8 +25,16 @@ export class ApiError extends Error {
   }
 }
 
+// Bearer token (set by the auth provider). Attached to every request.
+let authToken: string | null = null;
+export function setAuthToken(token: string | null): void {
+  authToken = token;
+}
+
 async function req<T>(path: string, opts: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${V1}${path}`, opts);
+  const headers = new Headers(opts.headers || {});
+  if (authToken) headers.set("Authorization", `Bearer ${authToken}`);
+  const res = await fetch(`${V1}${path}`, { ...opts, headers });
   if (!res.ok) {
     let detail = `HTTP ${res.status}`;
     try {
@@ -48,6 +56,19 @@ const json = (body: unknown): RequestInit => ({
 
 export const api = {
   health: () => req<{ status: string; queue_depth: number }>("/health"),
+
+  // auth
+  authConfig: () =>
+    req<{ oidc_enabled: boolean; issuer: string; dev_mode: boolean }>(
+      "/auth/config",
+    ),
+  devToken: (role: string) =>
+    req<{ access_token: string; token_type: string; role: string }>(
+      "/auth/dev-token",
+      json({ role }),
+    ),
+  me: () =>
+    req<{ sub: string; role: string; anonymous: boolean }>("/auth/me"),
 
   // sessions / consent / capture
   createSession: (channel: string, event_id?: string, device_id?: string) =>

@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from . import __version__
 from .config import get_settings
 from .db import init_db
-from .routers import health, jobs, outputs, scenes, sessions, stats, ws
+from .routers import admin, auth, health, jobs, outputs, scenes, sessions, stats, ws
 from .seed import seed
 from .storage import storage_root
 
@@ -44,6 +44,8 @@ app.add_middleware(
 
 API = "/api/v1"
 app.include_router(health.router, prefix=API)
+app.include_router(auth.router, prefix=API)
+app.include_router(admin.router, prefix=API)
 app.include_router(sessions.router, prefix=API)
 app.include_router(scenes.router, prefix=API)
 app.include_router(jobs.router, prefix=API)

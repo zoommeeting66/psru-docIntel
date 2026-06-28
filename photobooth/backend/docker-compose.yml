@@ -19,6 +19,18 @@ services:
     image: redis:7-alpine
     ports: ["6379:6379"]
 
+  # Identity provider (OIDC). Imports the psru realm with demo users
+  # (admin/operator/executive, password = username). Admin console: :8080
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+    ports: ["8080:8080"]
+
   api:
     build: .
     depends_on:
@@ -29,6 +41,10 @@ services:
       STORAGE_DIR: /app/data/storage
       PUBLIC_BASE_URL: http://localhost:8000
       PIPELINE_MOCK: "true"
+      # Dev auth works out-of-the-box. To enforce real Keycloak OIDC instead,
+      # set OIDC_ISSUER (and ensure this container can resolve the issuer host;
+      # for browser+server parity run Keycloak with KC_HOSTNAME=localhost):
+      # OIDC_ISSUER: http://localhost:8080/realms/psru
     ports: ["8000:8000"]
     volumes: ["./data:/app/data"]
 
