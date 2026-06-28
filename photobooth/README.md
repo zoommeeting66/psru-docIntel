@@ -37,6 +37,8 @@
 | 17 | KPI และตัวชี้วัดความสำเร็จ | [`docs/10-roadmap-kpi-maintenance.md`](docs/10-roadmap-kpi-maintenance.md) |
 | 18 | แผนบำรุงรักษา/ขยายระบบ | [`docs/10-roadmap-kpi-maintenance.md`](docs/10-roadmap-kpi-maintenance.md) |
 
+> 📖 **วิธีใช้งานหน้าจอแบบละเอียด (ทุกหน้าจอ + ขั้นตอน):** ดู [`USAGE.md`](USAGE.md)
+
 ## เริ่มต้นใช้งานต้นแบบ (Prototype)
 
 ```bash
