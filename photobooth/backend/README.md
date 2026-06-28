@@ -80,4 +80,4 @@ backend/
 - สลับ stage ใน `pipeline.py` → โมเดลจริงผ่าน **Triton**, ใช้ **Redis/Celery** เป็น queue จริง (ปัจจุบันใช้ FastAPI BackgroundTasks)
 - เชื่อม **Keycloak (OIDC)** ใน `security.py` + บังคับ MFA สำหรับ admin
 - ย้าย storage → **S3/R2** + signed URL, ใช้ `schema.sql` (pgvector) + Alembic migrations
-- WebSocket job progress (ปัจจุบัน frontend ใช้ poll `GET /jobs/{id}`)
+- ~~WebSocket job progress~~ ✅ ทำแล้ว: `WS /api/v1/ws/jobs/{id}` (in-process hub + DB self-heal; frontend ใช้ WS, มี poll เป็น fallback) — Phase 2 เปลี่ยน hub → Redis pub/sub

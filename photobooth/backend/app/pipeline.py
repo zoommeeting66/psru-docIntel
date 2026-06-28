@@ -14,6 +14,7 @@ from datetime import timedelta
 
 from . import branding, storage
 from .config import get_settings
+from .events import hub
 from .db import SessionLocal, new_uuid, utcnow
 from .models import (
     BrandingTemplate,
@@ -43,6 +44,18 @@ STAGES = [
 
 class GuardrailError(Exception):
     """Raised when content guardrails reject a job (→ HTTP 422)."""
+
+
+def _snapshot(job: RenderJob, output_id: str | None = None) -> dict:
+    return {
+        "id": job.id,
+        "status": job.status,
+        "progress": job.progress,
+        "stage": job.stage,
+        "pipeline_steps": dict(job.pipeline_steps or {}),
+        "output_id": output_id,
+        "error": job.error,
+    }
 
 
 def check_guardrails(scene: Scene, fx: dict) -> None:
@@ -84,6 +97,7 @@ async def run_render_job(job_id: str, biometric_ok: bool = False) -> None:
                 job.progress = int(i / total * 100)
                 job.pipeline_steps = dict(steps)
                 await db.commit()
+                hub.publish(job.id, _snapshot(job))
 
             # ---- produce the output via the Branding Engine ----
             session = await db.get(Session, capture.session_id) if capture else None
@@ -137,12 +151,15 @@ async def run_render_job(job_id: str, biometric_ok: bool = False) -> None:
             job.stage = "completed"
             job.duration_ms = int((utcnow() - started).total_seconds() * 1000)
             await db.commit()
+            hub.publish(job.id, _snapshot(job, output_id=out_id))
 
         except GuardrailError as e:
             job.status = "failed"
             job.error = f"guardrail:{e}"
             await db.commit()
+            hub.publish(job.id, _snapshot(job))
         except Exception as e:  # noqa: BLE001 — record any stage failure
             job.status = "failed"
             job.error = str(e)
             await db.commit()
+            hub.publish(job.id, _snapshot(job))

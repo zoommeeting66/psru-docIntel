@@ -84,6 +84,8 @@ export const api = {
   qrUrl: (id: string) => `${V1}/outputs/${id}/qr`,
   downloadUrl: (id: string, fmt = "png") =>
     `${V1}/outputs/${id}/download?fmt=${fmt}`,
+  // ws:// or wss:// depending on the API scheme
+  wsJobUrl: (id: string) => `${V1.replace(/^http/, "ws")}/ws/jobs/${id}`,
 
   // stats
   statsOverview: () => req<StatsOverview>("/stats/overview"),

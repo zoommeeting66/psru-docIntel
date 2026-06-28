@@ -10,6 +10,7 @@ import { RenderStep } from "./RenderStep";
 import { ResultStep } from "./ResultStep";
 
 type Step = 1 | 2 | 3 | 4 | 5;
+const TERMINAL = new Set(["succeeded", "failed", "canceled"]);
 
 export function KioskFlow() {
   const [step, setStep] = useState<Step>(1);
@@ -24,12 +25,89 @@ export function KioskFlow() {
   const [job, setJob] = useState<Job | null>(null);
   const [output, setOutput] = useState<Output | null>(null);
 
+  const wsRef = useRef<WebSocket | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const stopPolling = () => {
+  const doneRef = useRef(false);
+
+  const cleanup = useCallback(() => {
     if (pollRef.current) clearInterval(pollRef.current);
     pollRef.current = null;
-  };
-  useEffect(() => stopPolling, []);
+    if (wsRef.current) {
+      wsRef.current.onclose = null;
+      wsRef.current.close();
+    }
+    wsRef.current = null;
+  }, []);
+  useEffect(() => cleanup, [cleanup]);
+
+  const finalize = useCallback(async (outputId: string) => {
+    try {
+      const out = await api.getOutput(outputId);
+      setOutput(out);
+      setStep(5);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "ดึงผลลัพธ์ไม่สำเร็จ");
+      setStep(3);
+    }
+  }, []);
+
+  const onSnapshot = useCallback(
+    (j: Job) => {
+      setJob(j);
+      if (TERMINAL.has(j.status)) {
+        doneRef.current = true;
+        cleanup();
+        if (j.status === "succeeded" && j.output_id) finalize(j.output_id);
+        else {
+          setError(`งานล้มเหลว (${j.status})`);
+          setStep(3);
+        }
+      }
+    },
+    [cleanup, finalize],
+  );
+
+  // Fallback: poll GET /jobs/{id} if the WebSocket is unavailable.
+  const startPolling = useCallback(
+    (jobId: string) => {
+      if (pollRef.current) return;
+      pollRef.current = setInterval(async () => {
+        try {
+          onSnapshot(await api.getJob(jobId));
+        } catch (e) {
+          cleanup();
+          setError(e instanceof Error ? e.message : "ติดตามงานไม่สำเร็จ");
+          setStep(3);
+        }
+      }, 600);
+    },
+    [cleanup, onSnapshot],
+  );
+
+  // Primary: stream progress over WebSocket, fall back to polling on failure.
+  const watch = useCallback(
+    (jobId: string) => {
+      doneRef.current = false;
+      try {
+        const ws = new WebSocket(api.wsJobUrl(jobId));
+        wsRef.current = ws;
+        ws.onmessage = (ev) => {
+          const data = JSON.parse(ev.data);
+          if (data.error) return;
+          onSnapshot(data as Job);
+        };
+        ws.onerror = () => {
+          if (!doneRef.current) startPolling(jobId);
+        };
+        ws.onclose = () => {
+          if (!doneRef.current) startPolling(jobId);
+        };
+      } catch {
+        startPolling(jobId);
+      }
+    },
+    [onSnapshot, startPolling],
+  );
 
   // STEP 1 → 2
   const startSession = useCallback(async (c: Consent) => {
@@ -78,6 +156,7 @@ export function KioskFlow() {
     ) => {
       if (!captureId) return;
       setSceneName(scenes.find((s) => s.id === sceneId)?.name ?? "PSRU");
+      setJob(null);
       setStep(4);
       setError(null);
       try {
@@ -88,36 +167,17 @@ export function KioskFlow() {
           fx,
         });
         setJob(created);
-        pollRef.current = setInterval(async () => {
-          try {
-            const j = await api.getJob(created.id);
-            setJob(j);
-            if (j.status === "succeeded" && j.output_id) {
-              stopPolling();
-              const out = await api.getOutput(j.output_id);
-              setOutput(out);
-              setStep(5);
-            } else if (j.status === "failed" || j.status === "canceled") {
-              stopPolling();
-              setError(`งานล้มเหลว (${j.status})`);
-              setStep(3);
-            }
-          } catch (e) {
-            stopPolling();
-            setError(e instanceof Error ? e.message : "ติดตามงานไม่สำเร็จ");
-            setStep(3);
-          }
-        }, 500);
+        watch(created.id);
       } catch (e) {
         setError(e instanceof Error ? e.message : "สร้างงานไม่สำเร็จ");
         setStep(3);
       }
     },
-    [captureId, scenes],
+    [captureId, scenes, watch],
   );
 
   const reset = useCallback(() => {
-    stopPolling();
+    cleanup();
     setSessionId(null);
     setCaptureId(null);
     setScenes([]);
@@ -126,7 +186,7 @@ export function KioskFlow() {
     setOutput(null);
     setError(null);
     setStep(1);
-  }, []);
+  }, [cleanup]);
 
   return (
     <div>

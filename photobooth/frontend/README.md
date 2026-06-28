@@ -24,7 +24,7 @@ cd ../backend && source .venv/bin/activate && uvicorn app.main:app --reload
 | Route | คำอธิบาย |
 |-------|----------|
 | `/` | Landing |
-| `/kiosk` | **Kiosk flow** เต็ม: Consent (PDPA) → ถ่ายภาพ (webcam) → เลือกฉาก/ชุด/FX → AI render (poll progress) → ผลลัพธ์ + QR/ดาวน์โหลด/แชร์/ให้คะแนน |
+| `/kiosk` | **Kiosk flow** เต็ม: Consent (PDPA) → ถ่ายภาพ (webcam) → เลือกฉาก/ชุด/FX → AI render (WebSocket progress) → ผลลัพธ์ + QR/ดาวน์โหลด/แชร์/ให้คะแนน |
 | `/dashboard` | Executive Dashboard อ่านสถิติจริงจาก `/stats/overview` + `/stats/scenes` |
 
 ## โครงสร้าง
@@ -50,8 +50,9 @@ src/
 ## สถาปัตยกรรม
 
 - **Server Components** เป็นค่าเริ่มต้น; ใช้ `"use client"` เฉพาะส่วนที่มี state/กล้อง/fetch
-- **KioskFlow** เป็น state machine (step 1–5) จัดการ session/capture/job และ **poll `/jobs/{id}`**
-  อัปเดต progress + สถานะรายขั้นแบบเรียลไทม์ (Phase 3 จะเปลี่ยนเป็น WebSocket)
+- **KioskFlow** เป็น state machine (step 1–5) จัดการ session/capture/job และติดตาม progress ผ่าน
+  **WebSocket** (`WS /api/v1/ws/jobs/{id}`) อัปเดตสถานะรายขั้นแบบเรียลไทม์
+  หาก WS ใช้ไม่ได้จะ **fallback เป็น polling `GET /jobs/{id}`** อัตโนมัติ
 - **กล้อง:** `getUserMedia` (ต้องการ localhost/HTTPS) — ถ้าเปิดไม่ได้จะ fallback เป็นภาพจำลองอัตโนมัติ
 - ภาพ output/QR เสิร์ฟจาก API โดยตรง (Phase 2: เปลี่ยนเป็น signed CDN URL)
 

@@ -32,6 +32,24 @@ page.on("console", (m) => {
   if (m.type() === "error") console.log("    [browser error]", m.text());
 });
 
+// track WebSocket usage for job progress
+let wsJobUrl = null;
+let wsTerminalFrame = false;
+page.on("websocket", (ws) => {
+  if (ws.url().includes("/ws/jobs/")) {
+    wsJobUrl = ws.url();
+    ws.on("framereceived", (f) => {
+      try {
+        const d = JSON.parse(f.payload);
+        if (["succeeded", "failed", "canceled"].includes(d.status))
+          wsTerminalFrame = true;
+      } catch {
+        /* ignore */
+      }
+    });
+  }
+});
+
 try {
   // ---------- STEP 1: consent ----------
   console.log("STEP 1 — consent (PDPA)");
@@ -74,7 +92,7 @@ try {
   await page.getByRole("button", { name: /สร้างภาพด้วย AI/ }).click();
 
   // ---------- STEP 4: rendering ----------
-  console.log("STEP 4 — AI render (polling /jobs)");
+  console.log("STEP 4 — AI render (WebSocket /ws/jobs)");
   await check(
     "render step shown",
     await page
@@ -101,6 +119,8 @@ try {
       .isVisible()
       .catch(() => false),
   );
+  check("WebSocket /ws/jobs used for progress", !!wsJobUrl);
+  check("WebSocket delivered terminal frame", wsTerminalFrame);
   // rate 5 stars (fires feedback POST)
   await page.locator("button:has(i.fa-star)").nth(4).click();
   await page.screenshot({ path: `${ART}05-result.png`, fullPage: true });

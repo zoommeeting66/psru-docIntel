@@ -459,17 +459,28 @@ async function renderLive(){
   const job=await api('/jobs',{method:'POST',headers:{'content-type':'application/json'},
     body:JSON.stringify({capture_id:ST.capture,scene_id:ST.sceneId,fx:fxObject()})});
   ST.job=job.id;
-  await new Promise((resolve,reject)=>{
-    const poll=setInterval(async()=>{
-      try{
-        const j=await api('/jobs/'+ST.job);
-        markPipe(j.pipeline_steps,j.progress,(j.stage||'')+' · '+j.progress+'%');
-        if(j.status==='succeeded'){ clearInterval(poll); ST.output=j.output_id; resolve(); }
-        else if(j.status==='failed'||j.status==='canceled'){ clearInterval(poll); reject(new Error('job '+j.status)); }
-      }catch(e){ clearInterval(poll); reject(e); }
-    },500);
-  });
+  await watchJob(ST.job);   // WebSocket (fallback: poll)
   await showResult();
+}
+// stream job progress via WebSocket; fall back to polling if WS is unavailable
+function watchJob(jobId){
+  return new Promise((resolve,reject)=>{
+    let done=false, poll=null, ws=null;
+    const cleanup=()=>{ if(poll)clearInterval(poll); if(ws){try{ws.onclose=null;ws.close();}catch(e){}} };
+    const handle=(j)=>{
+      markPipe(j.pipeline_steps,j.progress,(j.stage||'')+' · '+j.progress+'%');
+      if(j.status==='succeeded'){ done=true; cleanup(); ST.output=j.output_id; resolve(); }
+      else if(j.status==='failed'||j.status==='canceled'){ done=true; cleanup(); reject(new Error('job '+j.status)); }
+    };
+    const startPoll=()=>{ if(poll)return; poll=setInterval(async()=>{ try{ handle(await api('/jobs/'+jobId)); }catch(e){ cleanup(); reject(e); } },500); };
+    try{
+      const wsUrl=API_BASE.replace(/\/$/,'').replace(/^http/,'ws')+'/api/v1/ws/jobs/'+jobId;
+      ws=new WebSocket(wsUrl);
+      ws.onmessage=(ev)=>{ try{ const d=JSON.parse(ev.data); if(!d.error) handle(d); }catch(e){} };
+      ws.onerror=()=>{ if(!done) startPoll(); };
+      ws.onclose=()=>{ if(!done) startPoll(); };
+    }catch(e){ startPoll(); }
+  });
 }
 function renderMock(){
   let i=0; const bar=document.getElementById('renderBar'), stage=document.getElementById('renderStage');

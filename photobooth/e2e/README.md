@@ -8,8 +8,9 @@ live frontend (`:3000`) + Core API (`:8000`), then checks the Executive dashboar
 1. **Consent (PDPA)** — API health badge connects; accept consent
 2. **Capture** — webcam (fake media device) → upload
 3. **Scene** — scenes loaded from the API; pick one
-4. **Render** — render step shows while polling `GET /jobs/{id}`
-5. **Result** — the real **API-served image renders** (`naturalWidth > 0`) and the **QR** is shown; rate 5★ (fires feedback)
+4. **Render** — render step shows while progress streams over **WebSocket** (`/ws/jobs/{id}`)
+5. **Result** — the real **API-served image renders** (`naturalWidth > 0`) and the **QR** is shown;
+   asserts a WebSocket was opened and delivered a terminal frame; rate 5★ (fires feedback)
 6. **Dashboard** — `/stats` reflects `images_total ≥ 1`
 
 Screenshots are written to `artifacts/` (git-ignored).

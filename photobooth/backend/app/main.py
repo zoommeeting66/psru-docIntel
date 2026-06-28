@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from . import __version__
 from .config import get_settings
 from .db import init_db
-from .routers import health, jobs, outputs, scenes, sessions, stats
+from .routers import health, jobs, outputs, scenes, sessions, stats, ws
 from .seed import seed
 from .storage import storage_root
 
@@ -49,6 +49,7 @@ app.include_router(scenes.router, prefix=API)
 app.include_router(jobs.router, prefix=API)
 app.include_router(outputs.router, prefix=API)
 app.include_router(stats.router, prefix=API)
+app.include_router(ws.router, prefix=API)
 
 # Serve stored files (dev only; prod uses CDN + signed URLs)
 app.mount("/files", StaticFiles(directory=storage_root()), name="files")
