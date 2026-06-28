@@ -58,7 +58,10 @@ def compose_final(
     cx, cy = width // 2, int(height * 0.46)
     d.ellipse([cx - 70, cy - 130, cx + 70, cy - 10], fill=(255, 255, 255, 40))
     d.ellipse([cx - 110, cy + 0, cx + 110, cy + 220], fill=(255, 255, 255, 30))
-    d.text((cx, cy + 250), "ภาพผลลัพธ์ระดับสตูดิโอ (Phase 1 mock)",
+    # NOTE: the default PIL font (DejaVuSans) has no Thai glyphs, so static text
+    # here is kept in Latin. Phase 2 bundles a Thai font (Sarabun) so dynamic
+    # Thai text (e.g. scene/event names) renders correctly in the output image.
+    d.text((cx, cy + 250), "Studio-grade result (Phase 1 mock)",
            font=_font(26), fill=WHITE, anchor="mm")
 
     # top branding bar

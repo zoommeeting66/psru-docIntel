@@ -104,7 +104,12 @@ export function ResultStep({
           </p>
           <div className="flex gap-1 text-2xl text-psru-gold">
             {[1, 2, 3, 4, 5].map((n) => (
-              <button key={n} onClick={() => rate(n)}>
+              <button
+                key={n}
+                onClick={() => rate(n)}
+                aria-label={`ให้คะแนน ${n} ดาว`}
+                className="w-9 h-9 flex items-center justify-center"
+              >
                 <i className={`${n <= rating ? "fa-solid" : "fa-regular"} fa-star`} />
               </button>
             ))}

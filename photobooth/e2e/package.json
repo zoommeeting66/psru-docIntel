@@ -1,0 +1,13 @@
+{
+  "name": "psru-photobooth-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright E2E for the PSRU Photo Booth Kiosk flow",
+  "type": "module",
+  "scripts": {
+    "test": "node kiosk.e2e.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.49.1"
+  }
+}
