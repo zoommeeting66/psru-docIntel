@@ -40,7 +40,7 @@
 ## เริ่มต้นใช้งานต้นแบบ (Prototype)
 
 ```bash
-# เปิดต้นแบบ UI/UX (ไม่ต้องติดตั้งอะไร)
+# เปิดต้นแบบ UI/UX (ไม่ต้องติดตั้งอะไร — จะอยู่ในโหมดสาธิต/Mock)
 open photobooth/index.html      # macOS
 xdg-open photobooth/index.html  # Linux
 ```
@@ -48,6 +48,28 @@ xdg-open photobooth/index.html  # Linux
 ต้นแบบเป็น HTML ไฟล์เดียว (Tailwind CDN) สาธิต flow ครบ: Kiosk capture → เลือกฉาก →
 AI processing → ผลลัพธ์/Branding → Executive Dashboard → Administrator Console
 รองรับ Touch Screen / Kiosk / Mobile
+
+### เชื่อมต้นแบบเข้ากับ Backend จริง (Live mode)
+`index.html` ถูก **wire เข้ากับ Core API แล้ว** — ตั้ง `API_BASE` ในส่วน `<script>`
+(ค่าเริ่มต้น `http://localhost:8000`) แล้วรัน backend (ดู [`backend/README.md`](backend/README.md))
+
+```bash
+# 1) รัน backend
+cd photobooth/backend && python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt && cp .env.example .env
+uvicorn app.main:app --reload          # http://localhost:8000
+
+# 2) เปิดหน้าเว็บ (แนะนำผ่าน static server เพื่อให้กล้อง/CORS ทำงานเต็มที่)
+cd photobooth && python3 -m http.server 5500   # แล้วเปิด http://localhost:5500
+```
+
+- แถบสถานะมุมขวาบนจะแสดง **"API: เชื่อมต่อแล้ว"** เมื่อต่อ backend สำเร็จ
+- Kiosk flow จะ: สร้าง session + บันทึก consent จริง → เปิดกล้อง (ถ้าอนุญาต) ถ่าย+อัปโหลด →
+  โหลดฉากจาก API → สั่ง render job + poll progress รายขั้นจริง → แสดง **ภาพ branded จริง + QR**
+  → ดาวน์โหลด/แชร์/ให้คะแนนผ่าน API
+- ถ้าเชื่อม API ไม่ได้ จะ **fallback กลับเป็นโหมดสาธิต (mock) อัตโนมัติ** (ใช้บน GitHub Pages ได้)
+> หมายเหตุ: กล้อง (getUserMedia) ต้องเปิดผ่าน `http://localhost` หรือ HTTPS;
+> ถ้าเปิดไฟล์แบบ `file://` หรือกล้องไม่พร้อม ระบบจะใช้ภาพจำลองแทนโดยอัตโนมัติ
 
 ## Technology Stack (สรุป)
 

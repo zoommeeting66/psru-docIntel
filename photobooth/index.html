@@ -61,6 +61,7 @@ tailwind.config = {
       <button onclick="go('admin',this)" class="topnav px-3 py-2 rounded-lg hover:bg-white/10 font-semibold"><i class="fa-solid fa-sliders mr-1"></i> Admin</button>
     </nav>
     <div class="flex items-center gap-2">
+      <span id="apiBadge" class="hidden sm:flex items-center gap-1 text-[11px] bg-white/10 px-2 py-1 rounded-full"><span class="w-2 h-2 rounded-full bg-slate-300"></span> กำลังตรวจสอบ API…</span>
       <span class="hidden sm:flex items-center gap-1 text-[11px] bg-white/10 px-2 py-1 rounded-full"><span class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span> GPU 4/4 พร้อม</span>
       <div class="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center"><i class="fa-solid fa-user"></i></div>
     </div>
@@ -103,11 +104,11 @@ tailwind.config = {
       </div>
       <div class="space-y-3 text-sm">
         <label class="flex items-start gap-3 p-3 rounded-xl bg-white/70 cursor-pointer"><input id="c1" type="checkbox" class="mt-1 accent-psru-green w-4 h-4"><span><b>วิเคราะห์ภาพ/ใบหน้า-ท่าทาง</b> เพื่อจัดองค์ประกอบและแสง (จำเป็น)</span></label>
-        <label class="flex items-start gap-3 p-3 rounded-xl bg-white/70 cursor-pointer"><input type="checkbox" class="mt-1 accent-psru-green w-4 h-4"><span>วิเคราะห์อายุ/เพศโดยประมาณ เพื่อแนะนำฉาก/ชุด (ไม่บังคับ)</span></label>
-        <label class="flex items-start gap-3 p-3 rounded-xl bg-white/70 cursor-pointer"><input type="checkbox" class="mt-1 accent-psru-green w-4 h-4"><span>อนุญาตให้ PSRU ใช้ภาพในสื่อประชาสัมพันธ์ (ไม่บังคับ)</span></label>
+        <label class="flex items-start gap-3 p-3 rounded-xl bg-white/70 cursor-pointer"><input id="c2" type="checkbox" class="mt-1 accent-psru-green w-4 h-4"><span>วิเคราะห์อายุ/เพศโดยประมาณ เพื่อแนะนำฉาก/ชุด (ไม่บังคับ)</span></label>
+        <label class="flex items-start gap-3 p-3 rounded-xl bg-white/70 cursor-pointer"><input id="c3" type="checkbox" class="mt-1 accent-psru-green w-4 h-4"><span>อนุญาตให้ PSRU ใช้ภาพในสื่อประชาสัมพันธ์ (ไม่บังคับ)</span></label>
       </div>
       <p class="text-[11px] text-psru-muted mt-4"><i class="fa-solid fa-circle-info"></i> ภาพต้นฉบับจะถูกลบอัตโนมัติภายใน 24 ชม. · ทุกภาพมีลายน้ำ "AI-generated" · นโยบาย v2026.1</p>
-      <button onclick="next(2)" class="mt-6 w-full gradient-green text-white font-bold py-3.5 rounded-xl shadow-lg hover:opacity-95 disabled:opacity-40" id="consentBtn" disabled>ยอมรับและเริ่มต้น <i class="fa-solid fa-arrow-right ml-1"></i></button>
+      <button onclick="startSession()" class="mt-6 w-full gradient-green text-white font-bold py-3.5 rounded-xl shadow-lg hover:opacity-95 disabled:opacity-40" id="consentBtn" disabled>ยอมรับและเริ่มต้น <i class="fa-solid fa-arrow-right ml-1"></i></button>
     </div>
   </div>
 
@@ -118,9 +119,11 @@ tailwind.config = {
       <p class="text-psru-muted text-sm text-center mb-4">รองรับ Webcam · DSLR · Mirrorless · Mobile · Kiosk</p>
       <div class="relative rounded-2xl overflow-hidden bg-psru-greenDeep aspect-[4/3] flex items-center justify-center">
         <div class="absolute inset-0 opacity-20" style="background:radial-gradient(circle at 50% 40%, #0E7A4B, transparent 60%)"></div>
-        <div class="text-white/70 text-center z-10">
+        <video id="cam" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover hidden"></video>
+        <canvas id="snap" class="hidden"></canvas>
+        <div id="camFallback" class="text-white/70 text-center z-10">
           <i class="fa-solid fa-user-large text-7xl mb-2"></i>
-          <div class="text-xs">Live Preview (จำลอง)</div>
+          <div class="text-xs">Live Preview (เปิดกล้องไม่ได้ — จะใช้ภาพจำลอง)</div>
         </div>
         <div class="absolute top-3 left-3 text-[11px] bg-black/40 text-white px-2 py-1 rounded-full"><i class="fa-solid fa-circle text-red-400 text-[8px] mr-1"></i> REC</div>
         <div class="absolute bottom-3 right-3 text-[11px] bg-black/40 text-white px-2 py-1 rounded-full">AI แนะนำท่า: ยืนตรง ยิ้มเล็กน้อย</div>
@@ -130,7 +133,7 @@ tailwind.config = {
         <button class="py-2 rounded-xl bg-white text-psru-muted font-semibold"><i class="fa-solid fa-users mr-1"></i> หมู่</button>
         <button class="py-2 rounded-xl bg-white text-psru-muted font-semibold"><i class="fa-solid fa-bolt mr-1"></i> ตั้งเวลา</button>
       </div>
-      <button onclick="next(3)" class="mt-4 w-full gradient-gold text-white font-extrabold py-4 rounded-2xl shadow-lg text-lg"><i class="fa-solid fa-camera mr-2"></i> ถ่ายภาพ</button>
+      <button onclick="doCapture()" id="captureBtn" class="mt-4 w-full gradient-gold text-white font-extrabold py-4 rounded-2xl shadow-lg text-lg"><i class="fa-solid fa-camera mr-2"></i> ถ่ายภาพ</button>
     </div>
   </div>
 
@@ -174,28 +177,31 @@ tailwind.config = {
     <div class="grid lg:grid-cols-3 gap-5">
       <div class="lg:col-span-2 glass rounded-3xl p-5 shadow-xl">
         <div class="relative rounded-2xl overflow-hidden gradient-green aspect-[4/3] flex items-center justify-center">
-          <div class="absolute top-3 left-3 flex items-center gap-2 text-white text-xs"><div class="w-7 h-7 rounded-lg gradient-gold flex items-center justify-center text-psru-greenDeep font-extrabold">P</div> <span id="rTitle">พิธีพระราชทานปริญญาบัตร</span></div>
-          <div class="text-white text-center z-10">
-            <i class="fa-solid fa-image text-7xl mb-2 opacity-80"></i>
-            <div class="text-sm">ภาพผลลัพธ์ระดับสตูดิโอ (จำลอง)</div>
-          </div>
-          <div class="absolute inset-0 flex items-center justify-center text-white/10 text-5xl font-extrabold -rotate-12 select-none">PSRU · AI-generated</div>
-          <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-[11px]">
-            <span>PSRU Next & New For All</span>
-            <span class="flex items-center gap-2"><i class="fa-solid fa-qrcode"></i> No. 0042</span>
+          <img id="resultImg" alt="ภาพผลลัพธ์" class="absolute inset-0 w-full h-full object-contain bg-psru-greenDeep hidden">
+          <div id="resultMock" class="absolute inset-0 flex flex-col items-center justify-center">
+            <div class="absolute top-3 left-3 flex items-center gap-2 text-white text-xs"><div class="w-7 h-7 rounded-lg gradient-gold flex items-center justify-center text-psru-greenDeep font-extrabold">P</div> <span id="rTitle">พิธีพระราชทานปริญญาบัตร</span></div>
+            <div class="text-white text-center z-10">
+              <i class="fa-solid fa-image text-7xl mb-2 opacity-80"></i>
+              <div class="text-sm">ภาพผลลัพธ์ระดับสตูดิโอ (จำลอง)</div>
+            </div>
+            <div class="absolute inset-0 flex items-center justify-center text-white/10 text-5xl font-extrabold -rotate-12 select-none">PSRU · AI-generated</div>
+            <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-[11px]">
+              <span>PSRU Next & New For All</span>
+              <span class="flex items-center gap-2"><i class="fa-solid fa-qrcode"></i> <span id="rImageNo">No. 0042</span></span>
+            </div>
           </div>
         </div>
       </div>
       <div class="space-y-4">
         <div class="glass rounded-3xl p-5 shadow-xl text-center">
-          <div class="w-28 h-28 mx-auto rounded-xl bg-white border-2 border-psru-mint flex items-center justify-center text-psru-greenDark"><i class="fa-solid fa-qrcode text-6xl"></i></div>
+          <div id="qrBox" class="w-28 h-28 mx-auto rounded-xl bg-white border-2 border-psru-mint flex items-center justify-center text-psru-greenDark overflow-hidden"><i class="fa-solid fa-qrcode text-6xl"></i></div>
           <p class="text-sm text-psru-muted mt-2">สแกนเพื่อดาวน์โหลด (ลิงก์มีอายุ 30 วัน)</p>
         </div>
         <div class="glass rounded-3xl p-4 shadow-xl grid grid-cols-4 gap-2 text-center text-[11px] text-psru-greenDark">
-          <button class="py-2 rounded-xl bg-psru-mint"><i class="fa-solid fa-image block text-lg mb-1"></i>JPG</button>
-          <button class="py-2 rounded-xl bg-psru-mint"><i class="fa-solid fa-file-image block text-lg mb-1"></i>PNG</button>
-          <button class="py-2 rounded-xl bg-psru-mint"><i class="fa-solid fa-file-pdf block text-lg mb-1"></i>PDF</button>
-          <button class="py-2 rounded-xl bg-psru-mint"><i class="fa-solid fa-share-nodes block text-lg mb-1"></i>แชร์</button>
+          <button onclick="downloadOut('png')" class="py-2 rounded-xl bg-psru-mint"><i class="fa-solid fa-image block text-lg mb-1"></i>JPG</button>
+          <button onclick="downloadOut('png')" class="py-2 rounded-xl bg-psru-mint"><i class="fa-solid fa-file-image block text-lg mb-1"></i>PNG</button>
+          <button onclick="downloadOut('pdf')" class="py-2 rounded-xl bg-psru-mint"><i class="fa-solid fa-file-pdf block text-lg mb-1"></i>PDF</button>
+          <button onclick="shareOut()" class="py-2 rounded-xl bg-psru-mint"><i class="fa-solid fa-share-nodes block text-lg mb-1"></i>แชร์</button>
         </div>
         <div class="glass rounded-3xl p-4 shadow-xl">
           <p class="text-sm font-semibold text-psru-greenDark mb-2">ให้คะแนนความพึงพอใจ</p>
@@ -309,15 +315,40 @@ const scenes = [
 ];
 const outfits=['ชุดครุย','ชุดสูท','ชุดไทย','ชุดพิธีการ','ชุดนักศึกษา','ชุดผู้บริหาร','ชุดกีฬา','ชุดแฟชั่น'];
 const fxList=[['snow','หิมะ','fa-snowflake'],['rain','ฝน','fa-cloud-rain'],['confetti','Confetti','fa-shapes'],['fireworks','พลุ','fa-burst'],['sunset','พระอาทิตย์ตก','fa-sun'],['fog','หมอก','fa-smog'],['flowers','ดอกไม้','fa-spa']];
-const pipeline=['Segmentation (SAM 2)','Face & Pose','Scene Generate (SDXL)','Relighting (IC-Light)','Perspective Match','Beauty Enhance','AI Outfit','Branding Engine'];
+// pipeline stages mapped to backend keys (app/pipeline.py STAGES)
+const PIPE=[['segmentation','Segmentation (SAM 2)'],['face_pose','Face & Pose'],['scene_generate','Scene Generate (SDXL)'],['relight','Relighting (IC-Light)'],['perspective','Perspective Match'],['beauty','Beauty Enhance'],['outfit','AI Outfit'],['branding','Branding Engine']];
+
+/* ---------------- API config ----------------
+   ตั้ง API_BASE ให้ชี้ไป backend (FastAPI). ค่าว่าง = โหมดสาธิต (mock) ล้วน.
+   ถ้าเชื่อม API ไม่ได้ ระบบจะ fallback กลับเป็น mock อัตโนมัติ */
+let API_BASE = 'http://localhost:8000';
+let LIVE = false;
+const ST = { session:null, capture:null, job:null, output:null, sceneId:null };
+let apiScenes=null, apiOutfits=null, sceneList=null;
+const apiUrl=p=>API_BASE.replace(/\/$/,'')+'/api/v1'+p;
+
+async function api(path, opts={}){
+  const r=await fetch(apiUrl(path), opts);
+  if(!r.ok){ let d; try{d=await r.json();}catch(e){} throw new Error((d&&d.detail)||('HTTP '+r.status)); }
+  return r.status===204?null:r.json();
+}
+function setBadge(ok){
+  const b=document.getElementById('apiBadge'); if(!b) return;
+  b.innerHTML = ok
+    ? '<span class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span> API: เชื่อมต่อแล้ว'
+    : '<span class="w-2 h-2 rounded-full bg-amber-300"></span> โหมดสาธิต (Mock)';
+}
+async function checkApi(){
+  if(!API_BASE){ LIVE=false; setBadge(false); return; }
+  try{ await api('/health'); LIVE=true; setBadge(true); }
+  catch(e){ LIVE=false; setBadge(false); }
+}
 
 let selScene=2, selOutfit='ชุดครุย', selFx=new Set();
 
 /* ---------------- kiosk flow ---------------- */
-document.querySelectorAll('#c1').forEach(()=>{});
-document.getElementById('c1').addEventListener('change',e=>{
-  document.getElementById('consentBtn').disabled=!e.target.checked;
-});
+['c1','c2','c3'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('change',()=>{ document.getElementById('consentBtn').disabled=!document.getElementById('c1').checked; }); });
+
 function setStep(n){
   for(let i=1;i<=5;i++){
     document.getElementById('step-'+i).classList.toggle('hidden', i!==n);
@@ -325,44 +356,172 @@ function setStep(n){
     d.className='step-dot w-7 h-7 rounded-full flex items-center justify-center font-bold '+(i<=n?'bg-psru-green text-white':'bg-slate-200 text-slate-500');
   }
 }
-function next(n){ if(n===3) buildScenePicker(); setStep(n); window.scrollTo({top:0,behavior:'smooth'}); }
-function resetKiosk(){ document.getElementById('c1').checked=false; document.getElementById('consentBtn').disabled=true; selFx.clear(); setStep(1); }
 
-function buildScenePicker(){
-  const cats=[...new Set(scenes.map(s=>s.c))];
+// STEP 1 → 2 : create session + record consent
+async function startSession(){
+  ST.session=ST.capture=ST.job=ST.output=ST.sceneId=null;
+  if(LIVE){
+    try{
+      const s=await api('/sessions',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({channel:'kiosk'})});
+      ST.session=s.id;
+      await api('/sessions/'+s.id+'/consent',{method:'POST',headers:{'content-type':'application/json'},
+        body:JSON.stringify({biometric_ok:true,age_gender_ok:document.getElementById('c2').checked,marketing_ok:document.getElementById('c3').checked,policy_version:'2026.1'})});
+    }catch(e){ console.warn('session/consent → fallback mock:',e.message); ST.session=null; }
+  }
+  setStep(2); startCamera(); window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* camera */
+let camStream=null;
+async function startCamera(){
+  const v=document.getElementById('cam'), fb=document.getElementById('camFallback');
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+    v.srcObject=camStream; v.classList.remove('hidden'); fb.classList.add('hidden');
+  }catch(e){ v.classList.add('hidden'); fb.classList.remove('hidden'); }
+}
+function stopCamera(){ if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; } }
+function grabBlob(){
+  return new Promise(res=>{
+    const v=document.getElementById('cam'), c=document.getElementById('snap');
+    let w=1280,h=960;
+    if(camStream && v.videoWidth){ w=v.videoWidth; h=v.videoHeight; c.width=w; c.height=h; c.getContext('2d').drawImage(v,0,0,w,h); }
+    else { c.width=w; c.height=h; const g=c.getContext('2d'); g.fillStyle='#063D26'; g.fillRect(0,0,w,h); g.fillStyle='#C9A227'; g.font='bold 56px sans-serif'; g.textAlign='center'; g.fillText('PSRU (mock capture)',w/2,h/2); }
+    c.toBlob(b=>res(b),'image/jpeg',0.9);
+  });
+}
+
+// STEP 2 → 3 : capture & upload
+async function doCapture(){
+  const btn=document.getElementById('captureBtn'); btn.disabled=true;
+  const blob=await grabBlob(); stopCamera();
+  if(LIVE && ST.session){
+    try{
+      const fd=new FormData(); fd.append('file',blob,'capture.jpg'); fd.append('source_type','kiosk');
+      const cap=await api('/sessions/'+ST.session+'/captures',{method:'POST',body:fd});
+      ST.capture=cap.id;
+    }catch(e){ console.warn('capture → fallback mock:',e.message); ST.capture=null; }
+  }
+  btn.disabled=false;
+  await buildScenePicker(); setStep(3); window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function buildScenePicker(){
+  if(LIVE && !apiScenes){ try{ apiScenes=await api('/scenes'); apiOutfits=await api('/outfits'); }catch(e){ apiScenes=null; } }
+  const iconByName={}; scenes.forEach(s=>iconByName[s.n]=s.i);
+  sceneList = (LIVE && apiScenes) ? apiScenes.map(s=>({n:s.name,c:s.category||'PSRU',i:iconByName[s.name]||'fa-image',vr:s.is_360,id:s.id})) : scenes.map(s=>({...s,id:null}));
+  if(selScene>=sceneList.length) selScene=0;
+  const cats=[...new Set(sceneList.map(s=>s.c))];
   document.getElementById('sceneCats').innerHTML=cats.map(c=>`<span class="px-2 py-1 rounded-full bg-psru-mint text-psru-greenDark">${c}</span>`).join('');
-  document.getElementById('sceneGrid').innerHTML=scenes.map((s,idx)=>`
+  document.getElementById('sceneGrid').innerHTML=sceneList.map((s,idx)=>`
     <button onclick="pickScene(${idx},this)" class="scene-card ${idx===selScene?'sel':''} rounded-2xl overflow-hidden text-left shadow hover:shadow-lg transition">
       <div class="gradient-green h-24 flex items-center justify-center text-white text-3xl"><i class="fa-solid ${s.i}"></i></div>
       <div class="p-2 bg-white"><div class="text-xs font-semibold text-psru-ink leading-tight">${s.n}</div>
         <div class="text-[10px] text-psru-muted">${s.c}${s.vr?' · <span class="text-psru-gold">VR</span>':''}</div></div>
     </button>`).join('');
-  document.getElementById('outfitWrap').innerHTML=outfits.map(o=>`<button onclick="pickOutfit('${o}',this)" class="ochip px-3 py-1.5 rounded-full text-xs font-semibold ${o===selOutfit?'gradient-green text-white':'bg-white text-psru-muted'}">${o}</button>`).join('');
+  ST.sceneId = sceneList[selScene] ? sceneList[selScene].id : null;
+  const ofList=(LIVE && apiOutfits)?apiOutfits.map(o=>o.name):outfits;
+  document.getElementById('outfitWrap').innerHTML=ofList.map(o=>`<button onclick="pickOutfit('${o}',this)" class="ochip px-3 py-1.5 rounded-full text-xs font-semibold ${o===selOutfit?'gradient-green text-white':'bg-white text-psru-muted'}">${o}</button>`).join('');
   document.getElementById('fxWrap').innerHTML=fxList.map(f=>`<button onclick="toggleFx('${f[0]}',this)" class="fxchip px-3 py-1.5 rounded-full text-xs font-semibold bg-white text-psru-muted"><i class="fa-solid ${f[2]} mr-1"></i>${f[1]}</button>`).join('');
 }
-function pickScene(i,el){ selScene=i; document.querySelectorAll('.scene-card').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+function pickScene(i,el){ selScene=i; ST.sceneId=(sceneList&&sceneList[i])?sceneList[i].id:null; document.querySelectorAll('.scene-card').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
 function pickOutfit(o,el){ selOutfit=o; document.querySelectorAll('.ochip').forEach(c=>c.className='ochip px-3 py-1.5 rounded-full text-xs font-semibold bg-white text-psru-muted'); el.className='ochip px-3 py-1.5 rounded-full text-xs font-semibold gradient-green text-white'; }
 function toggleFx(f,el){ if(selFx.has(f)){selFx.delete(f); el.className='fxchip px-3 py-1.5 rounded-full text-xs font-semibold bg-white text-psru-muted';} else {selFx.add(f); el.className='fxchip px-3 py-1.5 rounded-full text-xs font-semibold gradient-gold text-white';} }
+function fxObject(){ const o={}; selFx.forEach(f=>o[f]=true); return o; }
 
-function render(){
+/* render pipeline UI */
+function renderPipeUI(){
+  document.getElementById('pipeSteps').innerHTML=PIPE.map((p,i)=>`<div id="pp${i}" class="flex items-center gap-2 opacity-40"><i class="fa-regular fa-circle"></i> ${p[1]}</div>`).join('');
+}
+function markPipe(steps,progress,label){
+  PIPE.forEach((p,i)=>{ const el=document.getElementById('pp'+i); if(!el)return; const st=steps&&steps[p[0]];
+    if(st&&st.status==='done'){ el.classList.remove('opacity-40'); el.innerHTML=`<i class="fa-solid fa-circle-check text-psru-goldSoft"></i> ${p[1]}`; }
+    else if(st&&st.status==='skipped'){ el.classList.remove('opacity-40'); el.innerHTML=`<i class="fa-solid fa-circle-minus text-white/50"></i> ${p[1]} <span class="text-[10px]">(ข้าม)</span>`; }
+  });
+  document.getElementById('renderBar').style.width=(progress||0)+'%';
+  if(label) document.getElementById('renderStage').textContent=label;
+}
+
+// STEP 3 → 4 → 5 : render
+async function render(){
   setStep(4);
-  document.getElementById('rTitle').textContent=scenes[selScene].n;
-  const ps=document.getElementById('pipeSteps');
-  ps.innerHTML=pipeline.map((p,i)=>`<div id="pp${i}" class="flex items-center gap-2 opacity-40"><i class="fa-regular fa-circle"></i> ${p}</div>`).join('');
-  let i=0;
-  const bar=document.getElementById('renderBar'), stage=document.getElementById('renderStage');
+  document.getElementById('rTitle').textContent=(sceneList&&sceneList[selScene]?sceneList[selScene].n:'PSRU');
+  renderPipeUI();
+  document.getElementById('renderBar').style.width='0%';
+  document.getElementById('renderStage').textContent='กำลังเริ่มต้น…';
+  if(LIVE && ST.capture && ST.sceneId){
+    try{ await renderLive(); return; }
+    catch(e){ console.warn('render → fallback mock:',e.message); }
+  }
+  renderMock();
+}
+async function renderLive(){
+  const job=await api('/jobs',{method:'POST',headers:{'content-type':'application/json'},
+    body:JSON.stringify({capture_id:ST.capture,scene_id:ST.sceneId,fx:fxObject()})});
+  ST.job=job.id;
+  await new Promise((resolve,reject)=>{
+    const poll=setInterval(async()=>{
+      try{
+        const j=await api('/jobs/'+ST.job);
+        markPipe(j.pipeline_steps,j.progress,(j.stage||'')+' · '+j.progress+'%');
+        if(j.status==='succeeded'){ clearInterval(poll); ST.output=j.output_id; resolve(); }
+        else if(j.status==='failed'||j.status==='canceled'){ clearInterval(poll); reject(new Error('job '+j.status)); }
+      }catch(e){ clearInterval(poll); reject(e); }
+    },500);
+  });
+  await showResult();
+}
+function renderMock(){
+  let i=0; const bar=document.getElementById('renderBar'), stage=document.getElementById('renderStage');
   const t=setInterval(()=>{
-    if(i>0){ const prev=document.getElementById('pp'+(i-1)); prev.classList.remove('opacity-40'); prev.innerHTML=`<i class="fa-solid fa-circle-check text-psru-goldSoft"></i> ${pipeline[i-1]}`; }
-    if(i>=pipeline.length){ clearInterval(t); bar.style.width='100%'; setTimeout(()=>setStep(5),500); return; }
-    stage.textContent='ขั้นที่ '+(i+1)+'/'+pipeline.length+': '+pipeline[i];
-    bar.style.width=Math.round((i+1)/pipeline.length*100)+'%';
-    i++;
+    if(i>0){ const prev=document.getElementById('pp'+(i-1)); if(prev){prev.classList.remove('opacity-40'); prev.innerHTML=`<i class="fa-solid fa-circle-check text-psru-goldSoft"></i> ${PIPE[i-1][1]}`;} }
+    if(i>=PIPE.length){ clearInterval(t); bar.style.width='100%'; showResultMock(); setTimeout(()=>setStep(5),400); return; }
+    stage.textContent='ขั้นที่ '+(i+1)+'/'+PIPE.length+': '+PIPE[i][1];
+    bar.style.width=Math.round((i+1)/PIPE.length*100)+'%'; i++;
   },650);
+}
+
+/* result */
+async function showResult(){
+  try{
+    const out=await api('/outputs/'+ST.output);
+    const img=document.getElementById('resultImg'), mock=document.getElementById('resultMock');
+    if(out.final_url){ img.src=out.final_url; img.classList.remove('hidden'); mock.classList.add('hidden'); }
+    if(out.image_no) document.getElementById('rImageNo').textContent='No. '+out.image_no;
+    document.getElementById('qrBox').innerHTML=`<img src="${apiUrl('/outputs/'+ST.output+'/qr')}" class="w-full h-full object-contain" alt="QR">`;
+  }catch(e){ showResultMock(); }
+  setStep(5);
+}
+function showResultMock(){
+  document.getElementById('resultImg').classList.add('hidden');
+  document.getElementById('resultMock').classList.remove('hidden');
+  document.getElementById('rImageNo').textContent='No. 0042';
+  document.getElementById('qrBox').innerHTML='<i class="fa-solid fa-qrcode text-6xl"></i>';
+}
+function downloadOut(fmt){
+  if(LIVE && ST.output) window.open(apiUrl('/outputs/'+ST.output+'/download?fmt='+fmt),'_blank');
+  else alert('โหมดสาธิต: เชื่อมต่อ API (รัน backend) เพื่อดาวน์โหลดไฟล์จริง');
+}
+async function shareOut(){
+  if(LIVE && ST.output){ try{ const s=await api('/outputs/'+ST.output+'/share',{method:'POST'}); prompt('ลิงก์แชร์ (มีอายุ):',s.share_url); }catch(e){ alert('แชร์ไม่สำเร็จ'); } }
+  else alert('โหมดสาธิต: เชื่อมต่อ API เพื่อสร้างลิงก์แชร์จริง');
+}
+
+function resetKiosk(){
+  ['c1','c2','c3'].forEach(id=>{const e=document.getElementById(id); if(e)e.checked=false;});
+  document.getElementById('consentBtn').disabled=true; selFx.clear(); stopCamera();
+  ST.session=ST.capture=ST.job=ST.output=ST.sceneId=null;
+  document.getElementById('resultImg').classList.add('hidden');
+  document.getElementById('resultMock').classList.remove('hidden');
+  setStep(1);
 }
 
 /* stars */
 document.getElementById('stars').innerHTML=[1,2,3,4,5].map(n=>`<button onclick="rate(${n})" data-n="${n}"><i class="fa-${n<=4?'solid':'regular'} fa-star"></i></button>`).join('');
-function rate(n){ document.querySelectorAll('#stars button').forEach(b=>{ b.innerHTML=`<i class="fa-${b.dataset.n<=n?'solid':'regular'} fa-star"></i>`; }); }
+async function rate(n){
+  document.querySelectorAll('#stars button').forEach(b=>{ b.innerHTML=`<i class="fa-${b.dataset.n<=n?'solid':'regular'} fa-star"></i>`; });
+  if(LIVE && ST.output){ try{ await api('/outputs/'+ST.output+'/feedback',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({rating:n})}); }catch(e){} }
+}
 
 /* ---------------- VR grid ---------------- */
 document.getElementById('vrGrid').innerHTML=scenes.filter(s=>s.vr).map(s=>`
@@ -465,6 +624,7 @@ function adminTab(t,el){
 /* init */
 setStep(1);
 adminTab('scenes',document.querySelector('.atab'));
+checkApi();
 </script>
 </body>
 </html>

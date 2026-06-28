@@ -1,13 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import RedirectResponse
-from sqlalchemy import select
+from fastapi.responses import RedirectResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import get_settings
 from ..db import get_db
 from ..models import Download, Feedback, Output
 from ..schemas import FeedbackCreate, OutputOut, ShareOut
-from .. import storage
+from .. import branding, storage
 
 router = APIRouter(tags=["Outputs"])
 settings = get_settings()
@@ -60,6 +59,15 @@ async def share_output(output_id: str, db: AsyncSession = Depends(get_db)):
         qr_url=f"{base}/api/v1/outputs/{output_id}/qr",
         expires_at=o.expires_at,
     )
+
+
+@router.get("/outputs/{output_id}/qr")
+async def output_qr(output_id: str, db: AsyncSession = Depends(get_db)):
+    o = await db.get(Output, output_id)
+    if not o:
+        raise HTTPException(404, "output_not_found")
+    share_url = f"{settings.public_base_url.rstrip('/')}/s/{o.share_token}"
+    return Response(content=branding.make_qr(share_url), media_type="image/png")
 
 
 @router.post("/outputs/{output_id}/feedback", status_code=201)
