@@ -49,6 +49,31 @@ npm run deploy              # = wrangler deploy
 | PUT | `/api/documents/:id` | แก้ไขเอกสาร (ส่งเฉพาะฟิลด์ที่ต้องการแก้) |
 | DELETE | `/api/documents/:id` | ลบเอกสาร |
 | GET | `/api/search?q=` | ค้นหาเต็มข้อความ (FTS5 trigram, รองรับไทย) + snippet + rank |
+| POST | `/api/ai/analyze` | **Emergency SOS** — วิเคราะห์เหตุการณ์ด้วย Claude (proxy เก็บ API key ฝั่ง server) |
+
+### `/api/ai/analyze` — Emergency SOS AI
+Endpoint นี้เป็น proxy ไปยัง Claude API โดยเก็บ API key ไว้ฝั่ง Worker (เป็น secret)
+เพื่อไม่ให้ key หลุดไปอยู่ในหน้าเว็บ static
+
+**ตั้งค่า API key (ทำครั้งเดียว):**
+```bash
+cd backend
+wrangler secret put ANTHROPIC_API_KEY   # วาง API key เมื่อถูกถาม
+npm run deploy
+```
+
+**Request body (JSON):**
+```json
+{ "name": "สมชาย วงศ์ดี", "event": "น้ำท่วม", "status": "critical",
+  "injury": "severe", "battery": 23, "channel": "Bluetooth Mesh",
+  "hops": 3, "gpsAcc": 5 }
+```
+**Response:** `{ "analysis": "🔴 ระดับความเร่งด่วน: ..." }`
+ใช้โมเดล `claude-opus-4-8` (แก้ได้ใน `src/index.js`; ใช้ `claude-sonnet-4-6` ได้หากต้องการลดต้นทุน)
+ถ้ายังไม่ได้ตั้ง secret จะตอบ `503`
+
+**เชื่อมหน้าเว็บ:** ตั้ง `const API_BASE` ใน `emergency-sos.html` ให้ชี้ไปยัง URL ของ Worker
+(ปล่อยว่าง = หน้าเว็บทำงานในโหมด Offline โดยใช้การประเมินจากเซ็นเซอร์แทน AI จริง)
 
 ทุก endpoint เปิด CORS (`*`) เพื่อให้หน้าเว็บ static เรียกใช้ได้
 
@@ -70,8 +95,9 @@ backend/
 └── README.md
 ```
 
-## รอบถัดไป (Round 2 — ยังไม่ทำในรอบนี้)
-- รวม **Claude API** สำหรับ AI Analyzer / Chat / สรุปอัตโนมัติ (ตาม AI Guardrails)
+## รอบถัดไป (Round 2)
+- ✅ รวม **Claude API** สำหรับ Emergency SOS (`/api/ai/analyze`) — เก็บ key เป็น secret ฝั่ง Worker
+- รวม Claude API สำหรับ DocIntel AI Analyzer / Chat / สรุปอัตโนมัติ (ตาม AI Guardrails)
 - **R2** เก็บไฟล์ PDF/เอกสารต้นฉบับ + **OCR pipeline**
 - **Vectorize** สำหรับ semantic search เชิงความหมาย
 - Authentication (RBAC) + Audit log

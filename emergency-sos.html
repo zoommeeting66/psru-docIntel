@@ -23,6 +23,12 @@
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useRef, useCallback } = React;
 
+// ── Config ────────────────────────────────────────────────────────────────────
+// ชี้ไปยัง Cloudflare Worker (ดู backend/README.md). ปล่อยว่างไว้ = โหมด Offline
+// (AI วิเคราะห์จะ fallback เป็นการประเมินจากเซ็นเซอร์). ตั้งเป็น URL ของ Worker
+// เช่น "https://psru-docintel-api.<subdomain>.workers.dev" เพื่อเปิดใช้ AI จริง
+const API_BASE = "";
+
 // ── Palette ──────────────────────────────────────────────────────────────────
 // CRITICAL RED  #FF1F1F   ALERT AMBER  #FF8C00   SAFE GREEN  #00C46A
 // SIGNAL CYAN   #00D4FF   DARK BG      #0A0E1A   PANEL       #111827
@@ -58,6 +64,22 @@ const statusColor = (s) => ({ critical: "#FF1F1F", warning: "#FF8C00", stable: "
 const statusLabel = (s) => ({ critical: "วิกฤต", warning: "เฝ้าระวัง", stable: "ปลอดภัย", unknown: "ไม่ทราบ" }[s] || s);
 const batteryColor = (b) => b < 20 ? "#FF1F1F" : b < 50 ? "#FF8C00" : "#00C46A";
 const channelIcon = { "Bluetooth Mesh": "⬡", "Wi-Fi Direct": "◈", "SMS": "◉", "LoRa Gateway": "◎", "Satellite": "◇" };
+
+// การประเมินจากเซ็นเซอร์ (rule-based) — ใช้เมื่อไม่มี backend AI
+function offlineAnalysis(e) {
+  const urgency = e.status === "critical" ? "สูงสุด — ต้องช่วยเหลือทันที"
+    : e.status === "warning" ? "ปานกลาง — ติดตามใกล้ชิด" : "ต่ำ — สถานะคงที่";
+  const batt = e.battery < 20 ? `วิกฤต ${e.battery}% อุปกรณ์อาจดับเร็ว ๆ นี้`
+    : e.battery < 50 ? `ต่ำ ${e.battery}% ควรเร่งติดต่อ` : `เพียงพอ ${e.battery}%`;
+  const comm = `${e.channel} · ${e.hops} hops` + (e.hops >= 4 ? " (สัญญาณอ่อน เสี่ยงขาดการติดต่อ)" : "");
+  const gps = e.gpsAcc <= 10 ? `แม่นยำดี (±${e.gpsAcc}m)` : `คลาดเคลื่อนสูง (±${e.gpsAcc}m) ควรค้นหารัศมีกว้าง`;
+  return [
+    `🔴 ระดับความเร่งด่วน: ${urgency}`,
+    `📡 สถานะการสื่อสาร: ${comm} · แบต. ${batt}`,
+    `🚁 คำแนะนำทีมกู้ภัย: เข้าถึงพิกัด GPS ${gps}; ` + (e.status === "critical" ? "ส่งทีมพร้อมชุดปฐมพยาบาลทันที" : "เตรียมทีมและยืนยันสถานะซ้ำ"),
+    `⚠️ ความเสี่ยงที่ต้องระวัง: ` + (e.battery < 20 ? "อุปกรณ์ใกล้ดับ อาจขาดการติดต่อ; " : "") + (e.hops >= 4 ? "เส้นทาง mesh ยาว สัญญาณไม่เสถียร" : "ติดตามการเปลี่ยนแปลงสถานะต่อเนื่อง"),
+  ].join("\n");
+}
 
 function BatteryBar({ pct }) {
   return (
@@ -416,41 +438,29 @@ function EmergencySOS() {
 
   const analyzeWithAI = useCallback(async (event) => {
     if (!event || aiAnalysis[event.id]) return;
+    if (!API_BASE) {
+      // ไม่มี backend → โหมด Offline: ประเมินจากข้อมูลเซ็นเซอร์
+      setAiAnalysis(prev => ({ ...prev, [event.id]: offlineAnalysis(event) }));
+      return;
+    }
     setAiLoading(true);
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      // เรียกผ่าน Cloudflare Worker (เก็บ API key ไว้ฝั่ง server)
+      const res = await fetch(`${API_BASE}/api/ai/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 1000,
-          messages: [{
-            role: "user",
-            content: `คุณคือระบบ AI วิเคราะห์เหตุฉุกเฉิน (Emergency AI) ของระบบ SOS Offline Network
-
-วิเคราะห์เหตุการณ์นี้แบบกระชับ มืออาชีพ เป็น Bullet points:
-
-ข้อมูลผู้ประสบเหตุ:
-- ชื่อ: ${event.name}
-- เหตุการณ์: ${event.event}
-- สถานะ: ${event.status} (${event.injury} injury)
-- แบตเตอรี่: ${event.battery}%
-- ช่องทางสื่อสาร: ${event.channel} (${event.hops} hops)
-- ความแม่นยำ GPS: ±${event.gpsAcc}m
-
-ให้วิเคราะห์ 4 หัวข้อ (แต่ละหัวข้อ 1-2 บรรทัด):
-🔴 ระดับความเร่งด่วน:
-📡 สถานะการสื่อสาร:
-🚁 คำแนะนำทีมกู้ภัย:
-⚠️ ความเสี่ยงที่ต้องระวัง:`
-          }],
+          id: event.id, name: event.name, event: event.event, status: event.status,
+          injury: event.injury, battery: event.battery, channel: event.channel,
+          hops: event.hops, gpsAcc: event.gpsAcc,
         }),
       });
+      if (!res.ok) throw new Error("upstream " + res.status);
       const data = await res.json();
-      const text = data.content?.map(b => b.text || "").join("") || "ไม่สามารถวิเคราะห์ได้";
+      const text = data.analysis || "ไม่สามารถวิเคราะห์ได้";
       setAiAnalysis(prev => ({ ...prev, [event.id]: text }));
     } catch {
-      setAiAnalysis(prev => ({ ...prev, [event.id]: "⚠️ ไม่สามารถเชื่อมต่อ AI Engine\nระบบทำงานในโหมด Offline\nใช้การประเมินจากข้อมูลเซ็นเซอร์แทน" }));
+      setAiAnalysis(prev => ({ ...prev, [event.id]: "⚠️ ไม่สามารถเชื่อมต่อ AI Engine\nระบบทำงานในโหมด Offline\n\n" + offlineAnalysis(event) }));
     }
     setAiLoading(false);
   }, [aiAnalysis]);

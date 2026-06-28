@@ -3,10 +3,13 @@
  * Round 1: Documents + Search (เอกสาร + ค้นหา)
  *
  * Bindings (wrangler.toml):
- *   DB  -> D1 database "psru-docintel"
+ *   DB                 -> D1 database "psru-docintel"
+ *   ANTHROPIC_API_KEY  -> secret (ตั้งด้วย `wrangler secret put ANTHROPIC_API_KEY`)
+ *                         ใช้สำหรับ /api/ai/analyze เท่านั้น
  *
  * Endpoints:
  *   GET    /api/health
+ *   POST   /api/ai/analyze   (Emergency SOS — วิเคราะห์เหตุการณ์ด้วย Claude)
  *   GET    /api/stats
  *   GET    /api/documents?type=&status=&year=&org=&q=&limit=&offset=
  *   GET    /api/documents/:id
@@ -53,6 +56,57 @@ export default {
       // ---------- health ----------
       if (path === '/api/health') {
         return json({ ok: true, service: 'psru-docintel-api', time: new Date().toISOString() });
+      }
+
+      // ---------- AI analyze (Emergency SOS) ----------
+      // Proxy ไปยัง Claude API โดยเก็บ API key ไว้ฝั่ง server (secret)
+      // เพื่อไม่ให้ key หลุดไปอยู่ในหน้าเว็บ static
+      if (path === '/api/ai/analyze' && method === 'POST') {
+        if (!env.ANTHROPIC_API_KEY) {
+          return err('ยังไม่ได้ตั้งค่า ANTHROPIC_API_KEY (wrangler secret put ANTHROPIC_API_KEY)', 503);
+        }
+        const ev = await request.json().catch(() => null);
+        if (!ev || !ev.name) return err('ต้องระบุข้อมูลเหตุการณ์ (name, event, status, ...)');
+
+        const prompt = `คุณคือระบบ AI วิเคราะห์เหตุฉุกเฉิน (Emergency AI) ของระบบ SOS Offline Network
+
+วิเคราะห์เหตุการณ์นี้แบบกระชับ มืออาชีพ เป็น Bullet points:
+
+ข้อมูลผู้ประสบเหตุ:
+- ชื่อ: ${ev.name}
+- เหตุการณ์: ${ev.event ?? 'ไม่ทราบ'}
+- สถานะ: ${ev.status ?? 'ไม่ทราบ'} (${ev.injury ?? 'unknown'} injury)
+- แบตเตอรี่: ${ev.battery ?? '?'}%
+- ช่องทางสื่อสาร: ${ev.channel ?? 'ไม่ทราบ'} (${ev.hops ?? '?'} hops)
+- ความแม่นยำ GPS: ±${ev.gpsAcc ?? '?'}m
+
+ให้วิเคราะห์ 4 หัวข้อ (แต่ละหัวข้อ 1-2 บรรทัด):
+🔴 ระดับความเร่งด่วน:
+📡 สถานะการสื่อสาร:
+🚁 คำแนะนำทีมกู้ภัย:
+⚠️ ความเสี่ยงที่ต้องระวัง:`;
+
+        const upstream = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': env.ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model: 'claude-opus-4-8',
+            max_tokens: 1024,
+            messages: [{ role: 'user', content: prompt }],
+          }),
+        });
+
+        if (!upstream.ok) {
+          const detail = await upstream.text();
+          return err('Claude API error: ' + detail, 502);
+        }
+        const data = await upstream.json();
+        const text = (data.content || []).map((b) => b.text || '').join('') || 'ไม่สามารถวิเคราะห์ได้';
+        return json({ id: ev.id ?? null, analysis: text });
       }
 
       // ---------- stats (สำหรับ Dashboard) ----------
