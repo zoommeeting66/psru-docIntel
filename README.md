@@ -8,6 +8,7 @@
 | `index.html` | เว็บไซต์ Internationalization & Kenya Sandbox |
 | `campus-map.html` | แผนที่วิทยาเขต |
 | `doc-intelligence.html` | ต้นแบบ **DocIntel** — ระบบจัดเก็บ/ค้นหา/วิเคราะห์เอกสารอัจฉริยะ (frontend) |
+| `emergency-sos.html` | ต้นแบบ **Emergency SOS** — ระบบขอความช่วยเหลือฉุกเฉินผ่านเครือข่าย Mesh แบบ Offline พร้อม AI วิเคราะห์ |
 | `backend/` | **Backend จริง** — Cloudflare Worker API + D1 (เอกสาร + ค้นหา) |
 
 ## DocIntel — Document Intelligence Platform
