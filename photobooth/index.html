@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSRU AI Virtual Photo Booth & VR Studio</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      psru: {
+        green:'#0E7A4B', greenDark:'#0A5D39', greenDeep:'#063D26', mint:'#E7F5EE',
+        gold:'#C9A227', goldSoft:'#E3C766',
+        ink:'#1E293B', muted:'#64748B', bg:'#F4F8F5'
+      }
+    },
+    fontFamily:{ sans:['Inter','Sarabun','sans-serif'], thai:['Sarabun','Inter','sans-serif'] }
+  }}
+}
+</script>
+<style>
+  body{ font-family:'Sarabun','Inter',sans-serif; }
+  ::-webkit-scrollbar{ width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:4px; }
+  .view{ display:none; } .view.active{ display:block; animation:fadeIn .35s ease; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+  .nav-item.active{ background:rgba(201,162,39,.16); color:#C9A227; border-left-color:#C9A227; }
+  .nav-item{ border-left:3px solid transparent; }
+  .gradient-green{ background:linear-gradient(135deg,#0E7A4B 0%,#063D26 100%); }
+  .gradient-gold{ background:linear-gradient(135deg,#C9A227 0%,#9c7d1d 100%); }
+  .glass{ background:rgba(255,255,255,.65); backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,.5); }
+  .glass-dark{ background:rgba(6,61,38,.55); backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,.12); }
+  .scene-card.sel{ outline:3px solid #C9A227; outline-offset:2px; }
+  .spinner{ width:54px;height:54px;border:5px solid rgba(255,255,255,.25);border-top-color:#C9A227;border-radius:50%;animation:spin 1s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg);} }
+  .step-dot{ transition:all .3s; }
+  .bar{ transition:width .5s ease; }
+</style>
+</head>
+<body class="bg-psru-bg text-psru-ink antialiased">
+
+<!-- ===================== TOP BAR ===================== -->
+<header class="gradient-green text-white sticky top-0 z-40 shadow-lg">
+  <div class="max-w-[1500px] mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-xl gradient-gold flex items-center justify-center text-psru-greenDeep font-extrabold text-xl shadow">P</div>
+      <div>
+        <div class="font-extrabold tracking-wide leading-tight">PSRU AI Virtual Photo Booth</div>
+        <div class="text-psru-goldSoft text-[11px] tracking-wide">& VR Studio · PSRU Next & New For All</div>
+      </div>
+    </div>
+    <nav class="hidden md:flex items-center gap-1 text-sm">
+      <button onclick="go('kiosk',this)" class="topnav px-3 py-2 rounded-lg hover:bg-white/10 font-semibold"><i class="fa-solid fa-camera-retro mr-1"></i> Kiosk</button>
+      <button onclick="go('vr',this)" class="topnav px-3 py-2 rounded-lg hover:bg-white/10 font-semibold"><i class="fa-solid fa-vr-cardboard mr-1"></i> VR</button>
+      <button onclick="go('exec',this)" class="topnav px-3 py-2 rounded-lg hover:bg-white/10 font-semibold"><i class="fa-solid fa-chart-line mr-1"></i> Executive</button>
+      <button onclick="go('admin',this)" class="topnav px-3 py-2 rounded-lg hover:bg-white/10 font-semibold"><i class="fa-solid fa-sliders mr-1"></i> Admin</button>
+    </nav>
+    <div class="flex items-center gap-2">
+      <span class="hidden sm:flex items-center gap-1 text-[11px] bg-white/10 px-2 py-1 rounded-full"><span class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span> GPU 4/4 พร้อม</span>
+      <div class="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center"><i class="fa-solid fa-user"></i></div>
+    </div>
+  </div>
+  <!-- mobile nav -->
+  <div class="md:hidden flex border-t border-white/10 text-xs">
+    <button onclick="go('kiosk',this)" class="topnav flex-1 py-2"><i class="fa-solid fa-camera-retro"></i><div>Kiosk</div></button>
+    <button onclick="go('vr',this)" class="topnav flex-1 py-2"><i class="fa-solid fa-vr-cardboard"></i><div>VR</div></button>
+    <button onclick="go('exec',this)" class="topnav flex-1 py-2"><i class="fa-solid fa-chart-line"></i><div>Exec</div></button>
+    <button onclick="go('admin',this)" class="topnav flex-1 py-2"><i class="fa-solid fa-sliders"></i><div>Admin</div></button>
+  </div>
+</header>
+
+<main class="max-w-[1500px] mx-auto px-4 py-6">
+
+<!-- ============================================================ -->
+<!-- VIEW: KIOSK (Capture Flow)                                    -->
+<!-- ============================================================ -->
+<section id="view-kiosk" class="view active">
+  <!-- stepper -->
+  <div class="flex items-center justify-center gap-2 sm:gap-4 mb-6 text-xs sm:text-sm">
+    <div id="s1" class="flex items-center gap-2"><span class="step-dot w-7 h-7 rounded-full bg-psru-green text-white flex items-center justify-center font-bold">1</span><span class="hidden sm:inline">ยินยอม</span></div>
+    <i class="fa-solid fa-chevron-right text-slate-300"></i>
+    <div id="s2" class="flex items-center gap-2"><span class="step-dot w-7 h-7 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold">2</span><span class="hidden sm:inline">ถ่ายภาพ</span></div>
+    <i class="fa-solid fa-chevron-right text-slate-300"></i>
+    <div id="s3" class="flex items-center gap-2"><span class="step-dot w-7 h-7 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold">3</span><span class="hidden sm:inline">เลือกฉาก/ชุด</span></div>
+    <i class="fa-solid fa-chevron-right text-slate-300"></i>
+    <div id="s4" class="flex items-center gap-2"><span class="step-dot w-7 h-7 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold">4</span><span class="hidden sm:inline">AI สร้างภาพ</span></div>
+    <i class="fa-solid fa-chevron-right text-slate-300"></i>
+    <div id="s5" class="flex items-center gap-2"><span class="step-dot w-7 h-7 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold">5</span><span class="hidden sm:inline">ผลลัพธ์</span></div>
+  </div>
+
+  <!-- STEP 1: consent -->
+  <div id="step-1" class="kstep max-w-2xl mx-auto">
+    <div class="glass rounded-3xl p-8 shadow-xl">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 rounded-2xl gradient-green mx-auto flex items-center justify-center text-white text-2xl mb-3"><i class="fa-solid fa-shield-halved"></i></div>
+        <h2 class="text-2xl font-extrabold text-psru-greenDark">ความยินยอม (PDPA)</h2>
+        <p class="text-psru-muted text-sm mt-1">เพื่อสร้างภาพระดับสตูดิโอ ระบบจำเป็นต้องประมวลผลภาพของท่านชั่วคราว</p>
+      </div>
+      <div class="space-y-3 text-sm">
+        <label class="flex items-start gap-3 p-3 rounded-xl bg-white/70 cursor-pointer"><input id="c1" type="checkbox" class="mt-1 accent-psru-green w-4 h-4"><span><b>วิเคราะห์ภาพ/ใบหน้า-ท่าทาง</b> เพื่อจัดองค์ประกอบและแสง (จำเป็น)</span></label>
+        <label class="flex items-start gap-3 p-3 rounded-xl bg-white/70 cursor-pointer"><input type="checkbox" class="mt-1 accent-psru-green w-4 h-4"><span>วิเคราะห์อายุ/เพศโดยประมาณ เพื่อแนะนำฉาก/ชุด (ไม่บังคับ)</span></label>
+        <label class="flex items-start gap-3 p-3 rounded-xl bg-white/70 cursor-pointer"><input type="checkbox" class="mt-1 accent-psru-green w-4 h-4"><span>อนุญาตให้ PSRU ใช้ภาพในสื่อประชาสัมพันธ์ (ไม่บังคับ)</span></label>
+      </div>
+      <p class="text-[11px] text-psru-muted mt-4"><i class="fa-solid fa-circle-info"></i> ภาพต้นฉบับจะถูกลบอัตโนมัติภายใน 24 ชม. · ทุกภาพมีลายน้ำ "AI-generated" · นโยบาย v2026.1</p>
+      <button onclick="next(2)" class="mt-6 w-full gradient-green text-white font-bold py-3.5 rounded-xl shadow-lg hover:opacity-95 disabled:opacity-40" id="consentBtn" disabled>ยอมรับและเริ่มต้น <i class="fa-solid fa-arrow-right ml-1"></i></button>
+    </div>
+  </div>
+
+  <!-- STEP 2: capture -->
+  <div id="step-2" class="kstep hidden max-w-2xl mx-auto">
+    <div class="glass rounded-3xl p-6 shadow-xl">
+      <h2 class="text-xl font-extrabold text-psru-greenDark mb-1 text-center">ยืนหน้ากล้อง แล้วกดถ่าย</h2>
+      <p class="text-psru-muted text-sm text-center mb-4">รองรับ Webcam · DSLR · Mirrorless · Mobile · Kiosk</p>
+      <div class="relative rounded-2xl overflow-hidden bg-psru-greenDeep aspect-[4/3] flex items-center justify-center">
+        <div class="absolute inset-0 opacity-20" style="background:radial-gradient(circle at 50% 40%, #0E7A4B, transparent 60%)"></div>
+        <div class="text-white/70 text-center z-10">
+          <i class="fa-solid fa-user-large text-7xl mb-2"></i>
+          <div class="text-xs">Live Preview (จำลอง)</div>
+        </div>
+        <div class="absolute top-3 left-3 text-[11px] bg-black/40 text-white px-2 py-1 rounded-full"><i class="fa-solid fa-circle text-red-400 text-[8px] mr-1"></i> REC</div>
+        <div class="absolute bottom-3 right-3 text-[11px] bg-black/40 text-white px-2 py-1 rounded-full">AI แนะนำท่า: ยืนตรง ยิ้มเล็กน้อย</div>
+      </div>
+      <div class="grid grid-cols-3 gap-2 mt-4 text-sm">
+        <button class="py-2 rounded-xl bg-psru-mint text-psru-greenDark font-semibold"><i class="fa-solid fa-user mr-1"></i> เดี่ยว</button>
+        <button class="py-2 rounded-xl bg-white text-psru-muted font-semibold"><i class="fa-solid fa-users mr-1"></i> หมู่</button>
+        <button class="py-2 rounded-xl bg-white text-psru-muted font-semibold"><i class="fa-solid fa-bolt mr-1"></i> ตั้งเวลา</button>
+      </div>
+      <button onclick="next(3)" class="mt-4 w-full gradient-gold text-white font-extrabold py-4 rounded-2xl shadow-lg text-lg"><i class="fa-solid fa-camera mr-2"></i> ถ่ายภาพ</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: scene + outfit + fx -->
+  <div id="step-3" class="kstep hidden">
+    <div class="grid lg:grid-cols-3 gap-5">
+      <div class="lg:col-span-2 glass rounded-3xl p-5 shadow-xl">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-extrabold text-psru-greenDark">เลือกฉากเสมือน</h2>
+          <div class="flex gap-1 text-[11px]" id="sceneCats"></div>
+        </div>
+        <div id="sceneGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[420px] overflow-y-auto pr-1"></div>
+      </div>
+      <div class="space-y-5">
+        <div class="glass rounded-3xl p-5 shadow-xl">
+          <h3 class="font-bold text-psru-greenDark mb-2"><i class="fa-solid fa-shirt text-psru-gold mr-1"></i> เครื่องแต่งกาย (AI Outfit)</h3>
+          <div id="outfitWrap" class="flex flex-wrap gap-2"></div>
+        </div>
+        <div class="glass rounded-3xl p-5 shadow-xl">
+          <h3 class="font-bold text-psru-greenDark mb-2"><i class="fa-solid fa-wand-magic-sparkles text-psru-gold mr-1"></i> เอฟเฟกต์ (Generative)</h3>
+          <div id="fxWrap" class="flex flex-wrap gap-2"></div>
+        </div>
+        <button onclick="render()" class="w-full gradient-green text-white font-extrabold py-4 rounded-2xl shadow-lg text-lg" id="renderBtn"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> สร้างภาพด้วย AI</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4: rendering -->
+  <div id="step-4" class="kstep hidden max-w-xl mx-auto">
+    <div class="glass-dark gradient-green rounded-3xl p-8 shadow-xl text-white text-center">
+      <div class="spinner mx-auto mb-5"></div>
+      <h2 class="text-xl font-extrabold mb-1">AI กำลังสร้างภาพระดับสตูดิโอ…</h2>
+      <p id="renderStage" class="text-psru-goldSoft text-sm mb-5">กำลังเริ่มต้น…</p>
+      <div class="w-full bg-white/15 rounded-full h-3 overflow-hidden"><div id="renderBar" class="bar h-3 gradient-gold" style="width:0%"></div></div>
+      <div id="pipeSteps" class="grid grid-cols-2 gap-2 mt-6 text-left text-xs"></div>
+    </div>
+  </div>
+
+  <!-- STEP 5: result -->
+  <div id="step-5" class="kstep hidden">
+    <div class="grid lg:grid-cols-3 gap-5">
+      <div class="lg:col-span-2 glass rounded-3xl p-5 shadow-xl">
+        <div class="relative rounded-2xl overflow-hidden gradient-green aspect-[4/3] flex items-center justify-center">
+          <div class="absolute top-3 left-3 flex items-center gap-2 text-white text-xs"><div class="w-7 h-7 rounded-lg gradient-gold flex items-center justify-center text-psru-greenDeep font-extrabold">P</div> <span id="rTitle">พิธีพระราชทานปริญญาบัตร</span></div>
+          <div class="text-white text-center z-10">
+            <i class="fa-solid fa-image text-7xl mb-2 opacity-80"></i>
+            <div class="text-sm">ภาพผลลัพธ์ระดับสตูดิโอ (จำลอง)</div>
+          </div>
+          <div class="absolute inset-0 flex items-center justify-center text-white/10 text-5xl font-extrabold -rotate-12 select-none">PSRU · AI-generated</div>
+          <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-[11px]">
+            <span>PSRU Next & New For All</span>
+            <span class="flex items-center gap-2"><i class="fa-solid fa-qrcode"></i> No. 0042</span>
+          </div>
+        </div>
+      </div>
+      <div class="space-y-4">
+        <div class="glass rounded-3xl p-5 shadow-xl text-center">
+          <div class="w-28 h-28 mx-auto rounded-xl bg-white border-2 border-psru-mint flex items-center justify-center text-psru-greenDark"><i class="fa-solid fa-qrcode text-6xl"></i></div>
+          <p class="text-sm text-psru-muted mt-2">สแกนเพื่อดาวน์โหลด (ลิงก์มีอายุ 30 วัน)</p>
+        </div>
+        <div class="glass rounded-3xl p-4 shadow-xl grid grid-cols-4 gap-2 text-center text-[11px] text-psru-greenDark">
+          <button class="py-2 rounded-xl bg-psru-mint"><i class="fa-solid fa-image block text-lg mb-1"></i>JPG</button>
+          <button class="py-2 rounded-xl bg-psru-mint"><i class="fa-solid fa-file-image block text-lg mb-1"></i>PNG</button>
+          <button class="py-2 rounded-xl bg-psru-mint"><i class="fa-solid fa-file-pdf block text-lg mb-1"></i>PDF</button>
+          <button class="py-2 rounded-xl bg-psru-mint"><i class="fa-solid fa-share-nodes block text-lg mb-1"></i>แชร์</button>
+        </div>
+        <div class="glass rounded-3xl p-4 shadow-xl">
+          <p class="text-sm font-semibold text-psru-greenDark mb-2">ให้คะแนนความพึงพอใจ</p>
+          <div class="flex gap-1 text-2xl text-psru-gold" id="stars"></div>
+        </div>
+        <button onclick="resetKiosk()" class="w-full bg-white text-psru-greenDark font-bold py-3 rounded-xl shadow"><i class="fa-solid fa-rotate-left mr-1"></i> เริ่มใหม่</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VIEW: VR                                                      -->
+<!-- ============================================================ -->
+<section id="view-vr" class="view">
+  <div class="glass rounded-3xl p-6 shadow-xl mb-5">
+    <h2 class="text-xl font-extrabold text-psru-greenDark"><i class="fa-solid fa-vr-cardboard text-psru-gold mr-2"></i>VR Mode & 360° Experience</h2>
+    <p class="text-psru-muted text-sm">เดินสำรวจฉากเสมือนของ PSRU ผ่าน WebXR (เบราว์เซอร์) หรือ OpenXR (Headset)</p>
+  </div>
+  <div id="vrGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VIEW: EXECUTIVE DASHBOARD                                     -->
+<!-- ============================================================ -->
+<section id="view-exec" class="view">
+  <div class="flex items-center justify-between mb-5">
+    <div>
+      <h2 class="text-2xl font-extrabold text-psru-greenDark">Executive Dashboard</h2>
+      <p class="text-psru-muted text-sm">ภาพรวมการใช้งานระบบ · งานพิธีพระราชทานปริญญาบัตร 2569</p>
+    </div>
+    <span class="text-xs glass px-3 py-2 rounded-full text-psru-greenDark">อัปเดตล่าสุด: เรียลไทม์</span>
+  </div>
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5" id="kpiCards"></div>
+  <div class="grid lg:grid-cols-3 gap-5">
+    <div class="lg:col-span-2 glass rounded-3xl p-5 shadow-xl">
+      <h3 class="font-bold text-psru-greenDark mb-3">ปริมาณการสร้างภาพ (7 วันล่าสุด)</h3>
+      <div class="flex items-end gap-2 h-44" id="barChart"></div>
+    </div>
+    <div class="glass rounded-3xl p-5 shadow-xl">
+      <h3 class="font-bold text-psru-greenDark mb-3">ฉากยอดนิยม</h3>
+      <div class="space-y-3" id="popScenes"></div>
+    </div>
+  </div>
+  <div class="grid lg:grid-cols-2 gap-5 mt-5">
+    <div class="glass rounded-3xl p-5 shadow-xl">
+      <h3 class="font-bold text-psru-greenDark mb-3">Heatmap การใช้งาน (ชั่วโมง × วัน)</h3>
+      <div id="heatmap" class="grid grid-cols-12 gap-1"></div>
+      <div class="flex justify-between text-[10px] text-psru-muted mt-2"><span>08:00</span><span>เที่ยง</span><span>19:00</span></div>
+    </div>
+    <div class="glass rounded-3xl p-5 shadow-xl">
+      <h3 class="font-bold text-psru-greenDark mb-3">ความพึงพอใจ & คุณภาพ</h3>
+      <div class="space-y-4" id="quality"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VIEW: ADMIN                                                   -->
+<!-- ============================================================ -->
+<section id="view-admin" class="view">
+  <div class="grid lg:grid-cols-4 gap-5">
+    <aside class="glass rounded-3xl p-3 shadow-xl h-fit">
+      <div class="text-xs text-psru-muted px-2 py-1 font-semibold">Administrator Console</div>
+      <nav class="text-sm mt-1">
+        <button onclick="adminTab('scenes',this)" class="atab nav-item active w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2"><i class="fa-solid fa-mountain-sun w-4"></i> จัดการฉาก</button>
+        <button onclick="adminTab('brand',this)" class="atab nav-item w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2"><i class="fa-solid fa-stamp w-4"></i> โลโก้/กรอบ/แบรนด์</button>
+        <button onclick="adminTab('prompt',this)" class="atab nav-item w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2"><i class="fa-solid fa-terminal w-4"></i> AI Prompt</button>
+        <button onclick="adminTab('events',this)" class="atab nav-item w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2"><i class="fa-solid fa-calendar-star w-4"></i> Events</button>
+        <button onclick="adminTab('users',this)" class="atab nav-item w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2"><i class="fa-solid fa-user-shield w-4"></i> สิทธิ์ผู้ใช้ (RBAC)</button>
+        <button onclick="adminTab('audit',this)" class="atab nav-item w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2"><i class="fa-solid fa-clipboard-list w-4"></i> Audit Log</button>
+      </nav>
+    </aside>
+    <div class="lg:col-span-3 space-y-4" id="adminBody"></div>
+  </div>
+</section>
+
+</main>
+
+<footer class="max-w-[1500px] mx-auto px-4 py-6 text-center text-[11px] text-psru-muted">
+  © 2569 มหาวิทยาลัยราชภัฏพิบูลสงคราม · PSRU AI Virtual Photo Booth & VR Studio · ต้นแบบ UI/UX (Prototype)
+</footer>
+
+<script>
+/* ---------------- view routing ---------------- */
+function go(id, el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  document.querySelectorAll('.topnav').forEach(b=>b.classList.remove('bg-white/15'));
+  document.querySelectorAll('.topnav').forEach(b=>{ if(b.getAttribute('onclick').includes("'"+id+"'")) b.classList.add('bg-white/15'); });
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------------- data ---------------- */
+const scenes = [
+  {n:'หอประชุมศรีวชิรโชติ',c:'Campus',i:'fa-building-columns',vr:true},
+  {n:'อาคารเรียน PSRU',c:'Campus',i:'fa-school',vr:true},
+  {n:'พิธีพระราชทานปริญญาบัตร',c:'พิธีการ',i:'fa-graduation-cap',vr:false},
+  {n:'ห้องรับรอง VIP',c:'พิธีการ',i:'fa-couch',vr:true},
+  {n:'ห้องประชุมผู้บริหาร',c:'Academic',i:'fa-users-rectangle',vr:true},
+  {n:'ห้องเรียนอัจฉริยะ',c:'Academic',i:'fa-chalkboard',vr:true},
+  {n:'ห้องสมุดดิจิทัล',c:'Academic',i:'fa-book',vr:true},
+  {n:'เวทีประชุมวิชาการ',c:'Academic',i:'fa-microphone-lines',vr:true},
+  {n:'สตูดิโอข่าว',c:'Studio',i:'fa-tv',vr:false},
+  {n:'เมืองอนาคต',c:'Future',i:'fa-city',vr:true},
+  {n:'อวกาศ',c:'Future',i:'fa-rocket',vr:true},
+  {n:'ธรรมชาติ',c:'Nature',i:'fa-tree',vr:true},
+  {n:'พิพิธภัณฑ์',c:'Heritage',i:'fa-landmark',vr:true},
+  {n:'วัดไทย',c:'Heritage',i:'fa-place-of-worship',vr:true},
+  {n:'เมืองโบราณ',c:'Heritage',i:'fa-archway',vr:true},
+];
+const outfits=['ชุดครุย','ชุดสูท','ชุดไทย','ชุดพิธีการ','ชุดนักศึกษา','ชุดผู้บริหาร','ชุดกีฬา','ชุดแฟชั่น'];
+const fxList=[['snow','หิมะ','fa-snowflake'],['rain','ฝน','fa-cloud-rain'],['confetti','Confetti','fa-shapes'],['fireworks','พลุ','fa-burst'],['sunset','พระอาทิตย์ตก','fa-sun'],['fog','หมอก','fa-smog'],['flowers','ดอกไม้','fa-spa']];
+const pipeline=['Segmentation (SAM 2)','Face & Pose','Scene Generate (SDXL)','Relighting (IC-Light)','Perspective Match','Beauty Enhance','AI Outfit','Branding Engine'];
+
+let selScene=2, selOutfit='ชุดครุย', selFx=new Set();
+
+/* ---------------- kiosk flow ---------------- */
+document.querySelectorAll('#c1').forEach(()=>{});
+document.getElementById('c1').addEventListener('change',e=>{
+  document.getElementById('consentBtn').disabled=!e.target.checked;
+});
+function setStep(n){
+  for(let i=1;i<=5;i++){
+    document.getElementById('step-'+i).classList.toggle('hidden', i!==n);
+    const d=document.querySelector('#s'+i+' .step-dot');
+    d.className='step-dot w-7 h-7 rounded-full flex items-center justify-center font-bold '+(i<=n?'bg-psru-green text-white':'bg-slate-200 text-slate-500');
+  }
+}
+function next(n){ if(n===3) buildScenePicker(); setStep(n); window.scrollTo({top:0,behavior:'smooth'}); }
+function resetKiosk(){ document.getElementById('c1').checked=false; document.getElementById('consentBtn').disabled=true; selFx.clear(); setStep(1); }
+
+function buildScenePicker(){
+  const cats=[...new Set(scenes.map(s=>s.c))];
+  document.getElementById('sceneCats').innerHTML=cats.map(c=>`<span class="px-2 py-1 rounded-full bg-psru-mint text-psru-greenDark">${c}</span>`).join('');
+  document.getElementById('sceneGrid').innerHTML=scenes.map((s,idx)=>`
+    <button onclick="pickScene(${idx},this)" class="scene-card ${idx===selScene?'sel':''} rounded-2xl overflow-hidden text-left shadow hover:shadow-lg transition">
+      <div class="gradient-green h-24 flex items-center justify-center text-white text-3xl"><i class="fa-solid ${s.i}"></i></div>
+      <div class="p-2 bg-white"><div class="text-xs font-semibold text-psru-ink leading-tight">${s.n}</div>
+        <div class="text-[10px] text-psru-muted">${s.c}${s.vr?' · <span class="text-psru-gold">VR</span>':''}</div></div>
+    </button>`).join('');
+  document.getElementById('outfitWrap').innerHTML=outfits.map(o=>`<button onclick="pickOutfit('${o}',this)" class="ochip px-3 py-1.5 rounded-full text-xs font-semibold ${o===selOutfit?'gradient-green text-white':'bg-white text-psru-muted'}">${o}</button>`).join('');
+  document.getElementById('fxWrap').innerHTML=fxList.map(f=>`<button onclick="toggleFx('${f[0]}',this)" class="fxchip px-3 py-1.5 rounded-full text-xs font-semibold bg-white text-psru-muted"><i class="fa-solid ${f[2]} mr-1"></i>${f[1]}</button>`).join('');
+}
+function pickScene(i,el){ selScene=i; document.querySelectorAll('.scene-card').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+function pickOutfit(o,el){ selOutfit=o; document.querySelectorAll('.ochip').forEach(c=>c.className='ochip px-3 py-1.5 rounded-full text-xs font-semibold bg-white text-psru-muted'); el.className='ochip px-3 py-1.5 rounded-full text-xs font-semibold gradient-green text-white'; }
+function toggleFx(f,el){ if(selFx.has(f)){selFx.delete(f); el.className='fxchip px-3 py-1.5 rounded-full text-xs font-semibold bg-white text-psru-muted';} else {selFx.add(f); el.className='fxchip px-3 py-1.5 rounded-full text-xs font-semibold gradient-gold text-white';} }
+
+function render(){
+  setStep(4);
+  document.getElementById('rTitle').textContent=scenes[selScene].n;
+  const ps=document.getElementById('pipeSteps');
+  ps.innerHTML=pipeline.map((p,i)=>`<div id="pp${i}" class="flex items-center gap-2 opacity-40"><i class="fa-regular fa-circle"></i> ${p}</div>`).join('');
+  let i=0;
+  const bar=document.getElementById('renderBar'), stage=document.getElementById('renderStage');
+  const t=setInterval(()=>{
+    if(i>0){ const prev=document.getElementById('pp'+(i-1)); prev.classList.remove('opacity-40'); prev.innerHTML=`<i class="fa-solid fa-circle-check text-psru-goldSoft"></i> ${pipeline[i-1]}`; }
+    if(i>=pipeline.length){ clearInterval(t); bar.style.width='100%'; setTimeout(()=>setStep(5),500); return; }
+    stage.textContent='ขั้นที่ '+(i+1)+'/'+pipeline.length+': '+pipeline[i];
+    bar.style.width=Math.round((i+1)/pipeline.length*100)+'%';
+    i++;
+  },650);
+}
+
+/* stars */
+document.getElementById('stars').innerHTML=[1,2,3,4,5].map(n=>`<button onclick="rate(${n})" data-n="${n}"><i class="fa-${n<=4?'solid':'regular'} fa-star"></i></button>`).join('');
+function rate(n){ document.querySelectorAll('#stars button').forEach(b=>{ b.innerHTML=`<i class="fa-${b.dataset.n<=n?'solid':'regular'} fa-star"></i>`; }); }
+
+/* ---------------- VR grid ---------------- */
+document.getElementById('vrGrid').innerHTML=scenes.filter(s=>s.vr).map(s=>`
+  <div class="glass rounded-3xl overflow-hidden shadow-xl">
+    <div class="gradient-green h-36 flex items-center justify-center text-white text-5xl relative">
+      <i class="fa-solid ${s.i}"></i>
+      <span class="absolute top-2 right-2 text-[10px] bg-psru-gold text-psru-greenDeep font-bold px-2 py-0.5 rounded-full">360° / VR</span>
+    </div>
+    <div class="p-4">
+      <div class="font-bold text-psru-greenDark">${s.n}</div>
+      <div class="text-xs text-psru-muted mb-3">${s.c}</div>
+      <div class="flex gap-2 text-xs">
+        <button class="flex-1 py-2 rounded-lg bg-psru-mint text-psru-greenDark font-semibold"><i class="fa-solid fa-globe mr-1"></i> WebXR</button>
+        <button class="flex-1 py-2 rounded-lg gradient-green text-white font-semibold"><i class="fa-solid fa-vr-cardboard mr-1"></i> Headset</button>
+      </div>
+    </div>
+  </div>`).join('');
+
+/* ---------------- Executive dashboard ---------------- */
+const kpi=[['ผู้ใช้งานวันนี้','1,284','fa-users','+18%'],['ภาพที่สร้าง','3,902','fa-images','+24%'],['ดาวน์โหลด/แชร์','3,180','fa-download','81%'],['ความพึงพอใจ','4.6/5','fa-star','+0.2']];
+document.getElementById('kpiCards').innerHTML=kpi.map(k=>`
+  <div class="glass rounded-3xl p-5 shadow-xl">
+    <div class="flex items-center justify-between"><div class="w-10 h-10 rounded-xl gradient-green text-white flex items-center justify-center"><i class="fa-solid ${k[2]}"></i></div>
+    <span class="text-[11px] font-bold text-psru-green bg-psru-mint px-2 py-0.5 rounded-full">${k[3]}</span></div>
+    <div class="text-2xl font-extrabold text-psru-greenDark mt-3">${k[1]}</div>
+    <div class="text-xs text-psru-muted">${k[0]}</div>
+  </div>`).join('');
+const bars=[40,55,48,70,62,95,80];const days=['จ','อ','พ','พฤ','ศ','ส','อา'];
+document.getElementById('barChart').innerHTML=bars.map((b,i)=>`
+  <div class="flex-1 flex flex-col items-center justify-end h-full gap-1">
+    <div class="w-full rounded-t-lg ${i===5?'gradient-gold':'gradient-green'}" style="height:${b}%"></div>
+    <span class="text-[10px] text-psru-muted">${days[i]}</span></div>`).join('');
+const pop=[['พิธีพระราชทานปริญญาบัตร',82],['หอประชุมศรีวชิรโชติ',64],['ห้องสมุดดิจิทัล',47],['ธรรมชาติ',39],['เมืองอนาคต',28]];
+document.getElementById('popScenes').innerHTML=pop.map(p=>`
+  <div><div class="flex justify-between text-xs mb-1"><span class="text-psru-ink">${p[0]}</span><span class="text-psru-muted">${p[1]}%</span></div>
+  <div class="h-2 bg-psru-mint rounded-full"><div class="h-2 gradient-green rounded-full" style="width:${p[1]}%"></div></div></div>`).join('');
+let hm='';for(let i=0;i<60;i++){const v=Math.random();const op=v<.3?'bg-psru-mint':v<.6?'bg-psru-green/40':v<.85?'bg-psru-green/70':'bg-psru-gold';hm+=`<div class="aspect-square rounded ${op}"></div>`;}
+document.getElementById('heatmap').innerHTML=hm;
+const qual=[['ความพึงพอใจเฉลี่ย','4.6/5',92],['ภาพผ่านครั้งแรก (no re-render)','94%',94],['เวลาเรนเดอร์เฉลี่ย','9.4 วิ',88],['Uptime ระบบ (ช่วงงาน)','99.7%',99]];
+document.getElementById('quality').innerHTML=qual.map(q=>`
+  <div><div class="flex justify-between text-sm mb-1"><span class="text-psru-ink">${q[0]}</span><span class="font-bold text-psru-greenDark">${q[1]}</span></div>
+  <div class="h-2 bg-slate-100 rounded-full"><div class="h-2 gradient-gold rounded-full" style="width:${q[2]}%"></div></div></div>`).join('');
+
+/* ---------------- Admin ---------------- */
+function adminTab(t,el){
+  document.querySelectorAll('.atab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  const b=document.getElementById('adminBody');
+  if(t==='scenes'){
+    b.innerHTML=`<div class="glass rounded-3xl p-5 shadow-xl">
+      <div class="flex justify-between items-center mb-4"><h3 class="font-bold text-psru-greenDark">จัดการฉาก (${scenes.length})</h3>
+      <button class="gradient-green text-white text-sm px-4 py-2 rounded-xl font-semibold"><i class="fa-solid fa-plus mr-1"></i> เพิ่มฉาก</button></div>
+      <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="text-psru-muted text-left text-xs border-b"><tr><th class="py-2">ฉาก</th><th>หมวด</th><th>VR</th><th>สถานะ</th><th></th></tr></thead><tbody>
+      ${scenes.map(s=>`<tr class="border-b border-slate-100"><td class="py-2.5 font-medium flex items-center gap-2"><i class="fa-solid ${s.i} text-psru-green"></i> ${s.n}</td>
+      <td>${s.c}</td><td>${s.vr?'<i class="fa-solid fa-check text-psru-green"></i>':'—'}</td>
+      <td><span class="text-[11px] bg-psru-mint text-psru-greenDark px-2 py-0.5 rounded-full">เปิดใช้</span></td>
+      <td class="text-right text-psru-muted"><i class="fa-solid fa-pen mr-3 cursor-pointer"></i><i class="fa-solid fa-trash cursor-pointer"></i></td></tr>`).join('')}
+      </tbody></table></div></div>`;
+  } else if(t==='brand'){
+    b.innerHTML=`<div class="glass rounded-3xl p-5 shadow-xl"><h3 class="font-bold text-psru-greenDark mb-4">โลโก้ / กรอบ / ลายน้ำ</h3>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div class="border-2 border-dashed border-psru-mint rounded-2xl p-6 text-center text-psru-muted"><i class="fa-solid fa-image text-3xl mb-2"></i><div class="text-sm">อัปโหลดโลโก้ PSRU</div></div>
+        <div class="border-2 border-dashed border-psru-mint rounded-2xl p-6 text-center text-psru-muted"><i class="fa-solid fa-border-all text-3xl mb-2"></i><div class="text-sm">อัปโหลดกรอบภาพ</div></div>
+      </div>
+      <div class="mt-4 space-y-3 text-sm">
+        <label class="flex justify-between items-center"><span>แสดง QR Code</span><span class="w-10 h-5 rounded-full gradient-green relative"><span class="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full"></span></span></label>
+        <label class="flex justify-between items-center"><span>ลายน้ำ "AI-generated" (บังคับ)</span><span class="w-10 h-5 rounded-full gradient-green relative"><span class="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full"></span></span></label>
+        <label class="flex justify-between items-center"><span>หมายเลขภาพอัตโนมัติ</span><span class="w-10 h-5 rounded-full gradient-green relative"><span class="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full"></span></span></label>
+      </div></div>`;
+  } else if(t==='prompt'){
+    b.innerHTML=`<div class="glass rounded-3xl p-5 shadow-xl"><h3 class="font-bold text-psru-greenDark mb-3">AI Prompt — พิธีพระราชทานปริญญาบัตร <span class="text-xs text-psru-muted">(v3)</span></h3>
+      <label class="text-xs text-psru-muted">Positive prompt</label>
+      <textarea class="w-full border border-slate-200 rounded-xl p-3 text-sm mt-1 mb-3 h-20">elegant graduation hall, warm cinematic studio lighting, royal ceremony ambiance, bokeh, 85mm, photorealistic</textarea>
+      <label class="text-xs text-psru-muted">Negative prompt</label>
+      <textarea class="w-full border border-slate-200 rounded-xl p-3 text-sm mt-1 mb-3 h-16">deformed, extra fingers, lowres, watermark, text artifacts</textarea>
+      <div class="grid grid-cols-3 gap-3 text-sm">
+        <div><label class="text-xs text-psru-muted">Model</label><div class="border rounded-lg px-3 py-2 mt-1">SDXL + ControlNet</div></div>
+        <div><label class="text-xs text-psru-muted">Steps</label><div class="border rounded-lg px-3 py-2 mt-1">30</div></div>
+        <div><label class="text-xs text-psru-muted">CFG</label><div class="border rounded-lg px-3 py-2 mt-1">7.5</div></div>
+      </div>
+      <div class="mt-4 p-3 rounded-xl bg-amber-50 text-amber-800 text-xs"><i class="fa-solid fa-shield-halved mr-1"></i> Guardrail: ฉากเชิงสัญลักษณ์ถูกจำกัดบริบทอัตโนมัติ · ห้าม deepfake บุคคลจริง</div>
+      <button class="mt-4 gradient-green text-white px-4 py-2 rounded-xl text-sm font-semibold">บันทึก & สร้างเวอร์ชันใหม่</button></div>`;
+  } else if(t==='events'){
+    const ev=[['พิธีพระราชทานปริญญาบัตร 2569','15–17 ก.ค. 69','กำลังจัด'],['PSRU Open House','5 ส.ค. 69','กำหนดการ'],['ประชุมวิชาการระดับชาติ','20 ก.ย. 69','กำหนดการ']];
+    b.innerHTML=`<div class="glass rounded-3xl p-5 shadow-xl"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-psru-greenDark">Events</h3><button class="gradient-green text-white text-sm px-4 py-2 rounded-xl font-semibold"><i class="fa-solid fa-plus mr-1"></i> สร้าง Event</button></div>
+      <div class="space-y-2">${ev.map(e=>`<div class="flex items-center justify-between p-3 rounded-xl bg-white/70"><div><div class="font-semibold text-psru-ink">${e[0]}</div><div class="text-xs text-psru-muted">${e[1]}</div></div><span class="text-[11px] px-2 py-0.5 rounded-full ${e[2]==='กำลังจัด'?'gradient-gold text-white':'bg-psru-mint text-psru-greenDark'}">${e[2]}</span></div>`).join('')}</div></div>`;
+  } else if(t==='users'){
+    const us=[['สมชาย ผู้ดูแล','admin@psru.ac.th','Admin','MFA'],['เจ้าหน้าที่บูธ 1','op1@psru.ac.th','Operator','SSO'],['ผู้บริหาร','exec@psru.ac.th','Executive','SSO']];
+    b.innerHTML=`<div class="glass rounded-3xl p-5 shadow-xl"><h3 class="font-bold text-psru-greenDark mb-4">สิทธิ์ผู้ใช้ (RBAC)</h3>
+      <table class="w-full text-sm"><thead class="text-psru-muted text-left text-xs border-b"><tr><th class="py-2">ชื่อ</th><th>อีเมล</th><th>บทบาท</th><th>Auth</th></tr></thead><tbody>
+      ${us.map(u=>`<tr class="border-b border-slate-100"><td class="py-2.5 font-medium">${u[0]}</td><td class="text-psru-muted">${u[1]}</td><td><span class="text-[11px] bg-psru-mint text-psru-greenDark px-2 py-0.5 rounded-full">${u[2]}</span></td><td class="text-xs">${u[3]==='MFA'?'<span class="text-psru-green font-bold">MFA</span>':'SSO'}</td></tr>`).join('')}
+      </tbody></table></div>`;
+  } else if(t==='audit'){
+    const log=[['09:42','admin','scene.update','แก้ไขฉาก "ห้องสมุดดิจิทัล"'],['09:30','op1','output.export','ส่งออกภาพ No.0042 (PDF)'],['09:12','admin','prompt.create','สร้าง prompt v3 พิธีฯ'],['08:58','system','retention.purge','ลบภาพต้นฉบับหมดอายุ 320 ไฟล์'],['08:40','exec','dashboard.read','เปิด Executive Dashboard']];
+    b.innerHTML=`<div class="glass rounded-3xl p-5 shadow-xl"><h3 class="font-bold text-psru-greenDark mb-4">Audit Log <span class="text-xs text-psru-muted">(append-only)</span></h3>
+      <div class="space-y-1 text-sm">${log.map(l=>`<div class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/70"><span class="text-xs text-psru-muted w-12">${l[0]}</span><span class="text-[11px] bg-psru-greenDeep text-white px-2 py-0.5 rounded-full">${l[1]}</span><span class="font-mono text-xs text-psru-green">${l[2]}</span><span class="text-psru-ink">${l[3]}</span></div>`).join('')}</div></div>`;
+  }
+}
+
+/* init */
+setStep(1);
+adminTab('scenes',document.querySelector('.atab'));
+</script>
+</body>
+</html>

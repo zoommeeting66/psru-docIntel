@@ -1,0 +1,291 @@
+openapi: 3.1.0
+info:
+  title: PSRU AI Virtual Photo Booth & VR Studio API
+  version: "1.0.0"
+  description: >
+    REST API for the PSRU AI Virtual Photo Booth & VR Studio.
+    Capture → AI render (segmentation, scene generation, relighting, outfit) →
+    branding → output. PDPA-aware consent gating and audit trail.
+servers:
+  - url: https://api.photobooth.psru.ac.th/v1
+security:
+  - bearerAuth: []
+tags:
+  - name: Session
+  - name: Capture
+  - name: Scenes
+  - name: Jobs
+  - name: Outputs
+  - name: Stats
+  - name: Admin
+
+paths:
+  /health:
+    get:
+      tags: [Session]
+      security: []
+      summary: Health & queue depth
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  queue_depth: { type: integer, example: 7 }
+                  gpu_nodes_ready: { type: integer, example: 4 }
+
+  /sessions:
+    post:
+      tags: [Session]
+      summary: Start a session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [channel]
+              properties:
+                channel: { type: string, enum: [web, mobile, kiosk, vr] }
+                event_id: { type: string, format: uuid }
+                device_id: { type: string }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Session" }
+
+  /sessions/{id}:
+    get:
+      tags: [Session]
+      summary: Get session
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Session" }
+
+  /sessions/{id}/consent:
+    post:
+      tags: [Session]
+      summary: Record PDPA consent (granular)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [policy_version]
+              properties:
+                biometric_ok: { type: boolean, default: false }
+                age_gender_ok: { type: boolean, default: false }
+                marketing_ok: { type: boolean, default: false }
+                policy_version: { type: string }
+      responses:
+        "201": { description: Consent recorded }
+
+  /sessions/{id}/captures:
+    post:
+      tags: [Capture]
+      summary: Upload a captured image
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: { type: string, format: binary }
+                source_type: { type: string, example: kiosk }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Capture" }
+
+  /scenes:
+    get:
+      tags: [Scenes]
+      summary: List active scenes
+      parameters:
+        - { name: category, in: query, schema: { type: string } }
+        - { name: is_360, in: query, schema: { type: boolean } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Scene" }
+
+  /scenes/recommend:
+    get:
+      tags: [Scenes]
+      summary: Recommend scenes (semantic, by capture)
+      parameters:
+        - { name: capture_id, in: query, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Scene" }
+
+  /jobs:
+    post:
+      tags: [Jobs]
+      summary: Create a render job
+      parameters:
+        - { name: Idempotency-Key, in: header, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [capture_id, scene_id]
+              properties:
+                capture_id: { type: string, format: uuid }
+                scene_id: { type: string, format: uuid }
+                outfit_id: { type: string, format: uuid }
+                fx: { type: object, additionalProperties: true }
+                branding_id: { type: string, format: uuid }
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Job" }
+        "422": { description: Rejected by content guardrail }
+
+  /jobs/{id}:
+    get:
+      tags: [Jobs]
+      summary: Get job status
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Job" }
+
+  /outputs/{id}/download:
+    get:
+      tags: [Outputs]
+      summary: Get a signed download URL
+      parameters:
+        - { $ref: "#/components/parameters/Id" }
+        - { name: fmt, in: query, schema: { type: string, enum: [jpg, png, tiff, pdf] } }
+      responses:
+        "302": { description: Redirect to signed CDN URL }
+
+  /outputs/{id}/share:
+    post:
+      tags: [Outputs]
+      summary: Create a share token / QR
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  share_token: { type: string }
+                  qr_url: { type: string }
+                  expires_at: { type: string, format: date-time }
+
+  /stats/overview:
+    get:
+      tags: [Stats]
+      summary: Dashboard overview metrics
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions_total: { type: integer }
+                  images_total: { type: integer }
+                  downloads_total: { type: integer }
+                  avg_rating: { type: number }
+                  avg_render_ms: { type: integer }
+
+  /admin/scenes:
+    get:
+      tags: [Admin]
+      summary: List scenes (incl. inactive)
+      responses: { "200": { description: OK } }
+    post:
+      tags: [Admin]
+      summary: Create scene
+      responses: { "201": { description: Created } }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  schemas:
+    Session:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        channel: { type: string }
+        status: { type: string }
+        started_at: { type: string, format: date-time }
+    Capture:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        width: { type: integer }
+        height: { type: integer }
+        people_count: { type: integer }
+    Scene:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        category: { type: string }
+        thumbnail_url: { type: string }
+        is_360: { type: boolean }
+    Job:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [queued, running, succeeded, failed, canceled] }
+        progress: { type: integer }
+        stage: { type: string }
+        output_id: { type: string, format: uuid }
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code: { type: string }
+            message: { type: string }
+            trace_id: { type: string }
