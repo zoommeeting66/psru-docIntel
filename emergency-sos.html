@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emergency SOS — Offline Mesh Network | PSRU</title>
+<meta name="description" content="ระบบ SOS ขอความช่วยเหลือฉุกเฉินผ่านเครือข่าย Mesh แบบ Offline พร้อม AI วิเคราะห์สถานการณ์">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #0A0E1A; }
+  #root { min-height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ── Palette ──────────────────────────────────────────────────────────────────
+// CRITICAL RED  #FF1F1F   ALERT AMBER  #FF8C00   SAFE GREEN  #00C46A
+// SIGNAL CYAN   #00D4FF   DARK BG      #0A0E1A   PANEL       #111827
+// NODE PURPLE   #7C3AED   OFFLINE GRAY #6B7280
+
+// ── Mock data ─────────────────────────────────────────────────────────────────
+const MOCK_SOS_EVENTS = [
+  { id: "SOS-001", name: "สมชาย วงศ์ดี", lat: 18.795, lng: 98.979, status: "critical", injury: "severe", event: "น้ำท่วม", battery: 23, gpsAcc: 5, time: "14:23", hops: 3, channel: "Bluetooth Mesh", lastSeen: "12s ago" },
+  { id: "SOS-002", name: "มาลี สุขใส", lat: 18.801, lng: 98.985, status: "warning", injury: "moderate", event: "แผ่นดินไหว", battery: 67, gpsAcc: 8, time: "14:31", hops: 1, channel: "Wi-Fi Direct", lastSeen: "45s ago" },
+  { id: "SOS-003", name: "วิชัย ทองดี", lat: 18.789, lng: 98.972, status: "stable", injury: "minor", event: "ไฟป่า", battery: 89, gpsAcc: 3, time: "14:38", hops: 2, channel: "SMS", lastSeen: "2m ago" },
+  { id: "SOS-004", name: "นงลักษณ์ พิมล", lat: 18.810, lng: 98.963, status: "critical", injury: "severe", event: "อุบัติเหตุ", battery: 8, gpsAcc: 12, time: "14:41", hops: 5, channel: "Bluetooth Mesh", lastSeen: "5s ago" },
+  { id: "SOS-005", name: "ประทีป ใจดี", lat: 18.775, lng: 98.991, status: "warning", injury: "unknown", event: "พื้นที่ห่างไกล", battery: 45, gpsAcc: 20, time: "14:19", hops: 4, channel: "LoRa Gateway", lastSeen: "8m ago" },
+];
+
+const MOCK_NODES = [
+  { id: "N-01", type: "relay", lat: 18.793, lng: 98.981, signal: 92, active: true },
+  { id: "N-02", type: "relay", lat: 18.803, lng: 98.970, signal: 78, active: true },
+  { id: "N-03", type: "gateway", lat: 18.785, lng: 98.988, signal: 61, active: true },
+  { id: "N-04", type: "relay", lat: 18.812, lng: 98.978, signal: 45, active: false },
+  { id: "N-05", type: "command", lat: 18.798, lng: 98.968, signal: 100, active: true },
+];
+
+const CHANNELS = [
+  { name: "Bluetooth Mesh", icon: "⬡", active: true, quality: 87, color: "#00D4FF" },
+  { name: "Wi-Fi Direct", icon: "◈", active: true, quality: 64, color: "#7C3AED" },
+  { name: "SMS", icon: "◉", active: true, quality: 91, color: "#00C46A" },
+  { name: "LoRa Gateway", icon: "◎", active: false, quality: 0, color: "#6B7280" },
+  { name: "Satellite", icon: "◇", active: false, quality: 0, color: "#6B7280" },
+];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const statusColor = (s) => ({ critical: "#FF1F1F", warning: "#FF8C00", stable: "#00C46A", unknown: "#6B7280" }[s] || "#6B7280");
+const statusLabel = (s) => ({ critical: "วิกฤต", warning: "เฝ้าระวัง", stable: "ปลอดภัย", unknown: "ไม่ทราบ" }[s] || s);
+const batteryColor = (b) => b < 20 ? "#FF1F1F" : b < 50 ? "#FF8C00" : "#00C46A";
+const channelIcon = { "Bluetooth Mesh": "⬡", "Wi-Fi Direct": "◈", "SMS": "◉", "LoRa Gateway": "◎", "Satellite": "◇" };
+
+function BatteryBar({ pct }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <div style={{ width: 32, height: 14, border: `1.5px solid ${batteryColor(pct)}`, borderRadius: 3, position: "relative", display: "flex", alignItems: "center", padding: "0 2px" }}>
+        <div style={{ width: `${pct}%`, height: 8, background: batteryColor(pct), borderRadius: 1, transition: "width 0.5s" }} />
+        <div style={{ position: "absolute", right: -4, top: "50%", transform: "translateY(-50%)", width: 3, height: 7, background: batteryColor(pct), borderRadius: "0 1px 1px 0" }} />
+      </div>
+      <span style={{ color: batteryColor(pct), fontSize: 11, fontWeight: 700 }}>{pct}%</span>
+    </div>
+  );
+}
+
+function SignalBars({ quality }) {
+  const bars = [25, 50, 75, 100];
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 14 }}>
+      {bars.map((thresh, i) => (
+        <div key={i} style={{ width: 4, height: 4 + i * 3, borderRadius: 1, background: quality >= thresh ? "#00D4FF" : "#1F2937", transition: "background 0.3s" }} />
+      ))}
+    </div>
+  );
+}
+
+function PulseRing({ color, size = 48 }) {
+  return (
+    <div style={{ position: "relative", width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <style>{`
+        @keyframes pulse-ring {
+          0% { transform: scale(0.6); opacity: 0.8; }
+          100% { transform: scale(1.8); opacity: 0; }
+        }
+        @keyframes blink-sos {
+          0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+        }
+        @keyframes slide-in {
+          from { transform: translateX(-12px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes count-up {
+          from { transform: scale(0.8); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes mesh-flow {
+          0% { stroke-dashoffset: 20; }
+          100% { stroke-dashoffset: 0; }
+        }
+        @keyframes scanline {
+          0% { top: 0%; } 100% { top: 100%; }
+        }
+      `}</style>
+      <div style={{ position: "absolute", width: size, height: size, borderRadius: "50%", border: `2px solid ${color}`, animation: "pulse-ring 1.8s ease-out infinite" }} />
+      <div style={{ position: "absolute", width: size * 0.7, height: size * 0.7, borderRadius: "50%", border: `2px solid ${color}`, animation: "pulse-ring 1.8s ease-out infinite 0.6s", opacity: 0.6 }} />
+      <div style={{ width: size * 0.4, height: size * 0.4, borderRadius: "50%", background: color, opacity: 0.9 }} />
+    </div>
+  );
+}
+
+function MapCanvas({ events, nodes, selectedId, onSelect }) {
+  const canvasRef = useRef(null);
+  const animFrame = useRef(null);
+  const tick = useRef(0);
+
+  const allLat = [...events.map(e => e.lat), ...nodes.map(n => n.lat)];
+  const allLng = [...events.map(e => e.lng), ...nodes.map(n => n.lng)];
+  const minLat = Math.min(...allLat) - 0.005;
+  const maxLat = Math.max(...allLat) + 0.005;
+  const minLng = Math.min(...allLng) - 0.005;
+  const maxLng = Math.max(...allLng) + 0.005;
+
+  const toCanvas = (lat, lng, w, h) => ({
+    x: ((lng - minLng) / (maxLng - minLng)) * (w - 40) + 20,
+    y: h - ((lat - minLat) / (maxLat - minLat)) * (h - 40) - 20,
+  });
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+
+    const draw = () => {
+      tick.current += 1;
+      ctx.clearRect(0, 0, W, H);
+
+      // Background grid
+      ctx.strokeStyle = "#1F2937";
+      ctx.lineWidth = 0.5;
+      for (let x = 0; x < W; x += 30) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+      for (let y = 0; y < H; y += 30) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+      // Mesh connections (animated dashes)
+      const activeNodes = nodes.filter(n => n.active);
+      ctx.setLineDash([4, 4]);
+      ctx.lineDashOffset = -(tick.current * 0.3) % 8;
+      activeNodes.forEach((n, i) => {
+        activeNodes.slice(i + 1).forEach(m => {
+          const p1 = toCanvas(n.lat, n.lng, W, H);
+          const p2 = toCanvas(m.lat, m.lng, W, H);
+          const d = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+          if (d < 120) {
+            ctx.strokeStyle = `rgba(0,212,255,${0.15 + Math.sin(tick.current * 0.05 + i) * 0.05})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+          }
+        });
+      });
+      ctx.setLineDash([]);
+
+      // Nodes
+      nodes.forEach(n => {
+        const p = toCanvas(n.lat, n.lng, W, H);
+        const col = n.type === "command" ? "#7C3AED" : n.type === "gateway" ? "#FF8C00" : "#00D4FF";
+        ctx.fillStyle = n.active ? col : "#374151";
+        ctx.beginPath();
+        if (n.type === "command") {
+          ctx.rect(p.x - 7, p.y - 7, 14, 14);
+        } else if (n.type === "gateway") {
+          ctx.moveTo(p.x, p.y - 8); ctx.lineTo(p.x + 7, p.y + 5); ctx.lineTo(p.x - 7, p.y + 5);
+        } else {
+          ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+        }
+        ctx.fill();
+        if (n.active) {
+          ctx.strokeStyle = col;
+          ctx.lineWidth = 1;
+          ctx.globalAlpha = 0.3 + Math.sin(tick.current * 0.08) * 0.2;
+          ctx.beginPath(); ctx.arc(p.x, p.y, 12 + Math.sin(tick.current * 0.06) * 3, 0, Math.PI * 2); ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+        ctx.fillStyle = "#9CA3AF"; ctx.font = "8px monospace"; ctx.textAlign = "center";
+        ctx.fillText(n.id, p.x, p.y - 12);
+      });
+
+      // SOS events
+      events.forEach(ev => {
+        const p = toCanvas(ev.lat, ev.lng, W, H);
+        const col = statusColor(ev.status);
+        const selected = ev.id === selectedId;
+        const t = tick.current;
+
+        // Pulse rings for critical
+        if (ev.status === "critical") {
+          [0, 0.5, 1].forEach(offset => {
+            const phase = ((t * 0.04 + offset) % 1);
+            ctx.strokeStyle = col;
+            ctx.lineWidth = 1.5;
+            ctx.globalAlpha = Math.max(0, 1 - phase);
+            ctx.beginPath(); ctx.arc(p.x, p.y, 6 + phase * 22, 0, Math.PI * 2); ctx.stroke();
+          });
+          ctx.globalAlpha = 1;
+        }
+
+        // Dot
+        ctx.fillStyle = selected ? "#FFF" : col;
+        ctx.beginPath(); ctx.arc(p.x, p.y, selected ? 9 : 7, 0, Math.PI * 2); ctx.fill();
+        if (selected) {
+          ctx.strokeStyle = col; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(p.x, p.y, 12, 0, Math.PI * 2); ctx.stroke();
+        }
+
+        // SOS label
+        ctx.fillStyle = "#FFF"; ctx.font = `bold ${selected ? 7 : 6}px monospace`; ctx.textAlign = "center";
+        ctx.fillText("SOS", p.x, p.y + 2.5);
+
+        // Name tag
+        ctx.fillStyle = "#0A0E1A";
+        ctx.fillRect(p.x - 22, p.y - 26, 44, 12);
+        ctx.strokeStyle = col; ctx.lineWidth = 0.5;
+        ctx.strokeRect(p.x - 22, p.y - 26, 44, 12);
+        ctx.fillStyle = col; ctx.font = "8px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText(ev.name.split(" ")[0], p.x, p.y - 17);
+      });
+
+      animFrame.current = requestAnimationFrame(draw);
+    };
+
+    draw();
+    return () => cancelAnimationFrame(animFrame.current);
+  }, [events, nodes, selectedId]);
+
+  const handleClick = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) * (canvasRef.current.width / rect.width);
+    const my = (e.clientY - rect.top) * (canvasRef.current.height / rect.height);
+    const W = canvasRef.current.width, H = canvasRef.current.height;
+    let closest = null, minD = 20;
+    events.forEach(ev => {
+      const p = toCanvas(ev.lat, ev.lng, W, H);
+      const d = Math.hypot(mx - p.x, my - p.y);
+      if (d < minD) { minD = d; closest = ev.id; }
+    });
+    if (closest) onSelect(closest === selectedId ? null : closest);
+  };
+
+  return (
+    <canvas ref={canvasRef} width={600} height={340} onClick={handleClick}
+      style={{ width: "100%", height: "100%", cursor: "crosshair", display: "block" }} />
+  );
+}
+
+function SOSCard({ event, selected, onClick }) {
+  const col = statusColor(event.status);
+  return (
+    <div onClick={onClick} style={{
+      background: selected ? `rgba(${event.status === "critical" ? "255,31,31" : event.status === "warning" ? "255,140,0" : "0,196,106"},0.1)` : "#111827",
+      border: `1px solid ${selected ? col : "#1F2937"}`,
+      borderLeft: `3px solid ${col}`,
+      borderRadius: 8, padding: "10px 12px", cursor: "pointer",
+      transition: "all 0.2s", marginBottom: 6,
+      animation: event.status === "critical" ? "slide-in 0.3s ease" : undefined,
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+        <div>
+          <div style={{ color: col, fontSize: 10, fontFamily: "monospace", fontWeight: 700, letterSpacing: 1 }}>{event.id}</div>
+          <div style={{ color: "#F9FAFB", fontSize: 13, fontWeight: 600, marginTop: 1 }}>{event.name}</div>
+        </div>
+        <div style={{ background: col, color: "#000", fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 3, letterSpacing: 0.5 }}>
+          {statusLabel(event.status)}
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 8px" }}>
+        {[
+          ["⚡", event.event],
+          ["📍", `±${event.gpsAcc}m`],
+          ["🕐", event.time],
+          ["↗", `${event.hops} hops`],
+        ].map(([icon, val], i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <span style={{ fontSize: 10 }}>{icon}</span>
+            <span style={{ color: "#9CA3AF", fontSize: 10 }}>{val}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <span style={{ color: "#00D4FF", fontSize: 10 }}>{channelIcon[event.channel] || "◉"}</span>
+          <span style={{ color: "#6B7280", fontSize: 9 }}>{event.channel}</span>
+        </div>
+        <BatteryBar pct={event.battery} />
+      </div>
+      <div style={{ color: "#4B5563", fontSize: 9, marginTop: 4, fontFamily: "monospace" }}>Last seen: {event.lastSeen}</div>
+    </div>
+  );
+}
+
+function AIDashboard({ events }) {
+  const critical = events.filter(e => e.status === "critical").length;
+  const warning = events.filter(e => e.status === "warning").length;
+  const stable = events.filter(e => e.status === "stable").length;
+  const avgBattery = Math.round(events.reduce((s, e) => s + e.battery, 0) / events.length);
+  const urgencyScore = Math.round((critical * 40 + warning * 20 + (events.length > 0 ? 10 : 0)) / events.length);
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
+      {[
+        { label: "วิกฤต", val: critical, color: "#FF1F1F", sub: "ต้องช่วยทันที" },
+        { label: "เฝ้าระวัง", val: warning, color: "#FF8C00", sub: "ติดตามอย่างใกล้ชิด" },
+        { label: "ปลอดภัย", val: stable, color: "#00C46A", sub: "สถานะดี" },
+        { label: "แบต.เฉลี่ย", val: `${avgBattery}%`, color: batteryColor(avgBattery), sub: "อุปกรณ์ทั้งหมด" },
+        { label: "Node ใช้งาน", val: `${MOCK_NODES.filter(n => n.active).length}/${MOCK_NODES.length}`, color: "#00D4FF", sub: "Mesh Network" },
+        { label: "ความเร่งด่วน", val: `${urgencyScore}%`, color: urgencyScore > 60 ? "#FF1F1F" : "#FF8C00", sub: "AI Score" },
+      ].map(({ label, val, color, sub }, i) => (
+        <div key={i} style={{ background: "#111827", border: "1px solid #1F2937", borderRadius: 8, padding: "10px 12px", textAlign: "center" }}>
+          <div style={{ color, fontSize: 22, fontWeight: 800, fontFamily: "monospace", animation: i < 3 ? "count-up 0.5s ease" : undefined }}>{val}</div>
+          <div style={{ color: "#F9FAFB", fontSize: 11, fontWeight: 600, marginTop: 2 }}>{label}</div>
+          <div style={{ color: "#4B5563", fontSize: 9, marginTop: 1 }}>{sub}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AIAnalysis({ event, loading, analysis }) {
+  if (!event) return (
+    <div style={{ textAlign: "center", padding: 24, color: "#4B5563" }}>
+      <div style={{ fontSize: 32, marginBottom: 8 }}>◎</div>
+      <div style={{ fontSize: 12 }}>เลือกเหตุการณ์บนแผนที่หรือในรายการ</div>
+      <div style={{ fontSize: 11, marginTop: 4 }}>เพื่อให้ AI วิเคราะห์สถานการณ์</div>
+    </div>
+  );
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <PulseRing color={statusColor(event.status)} size={32} />
+        <div>
+          <div style={{ color: "#F9FAFB", fontSize: 13, fontWeight: 700 }}>{event.name}</div>
+          <div style={{ color: statusColor(event.status), fontSize: 11 }}>{event.event} · {statusLabel(event.status)}</div>
+        </div>
+      </div>
+      {loading ? (
+        <div style={{ display: "flex", gap: 6, alignItems: "center", color: "#00D4FF", fontSize: 12 }}>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#00D4FF", animation: "blink-sos 0.6s infinite" }} />
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#00D4FF", animation: "blink-sos 0.6s infinite 0.2s" }} />
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#00D4FF", animation: "blink-sos 0.6s infinite 0.4s" }} />
+          <span style={{ marginLeft: 4 }}>AI กำลังวิเคราะห์...</span>
+        </div>
+      ) : analysis ? (
+        <div style={{ color: "#D1D5DB", fontSize: 12, lineHeight: 1.7, whiteSpace: "pre-wrap", background: "#0A0E1A", borderRadius: 6, padding: 12, border: "1px solid #1F2937" }}>
+          {analysis}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ── Main App ──────────────────────────────────────────────────────────────────
+function EmergencySOS() {
+  const [tab, setTab] = useState("dashboard");
+  const [selectedId, setSelectedId] = useState(null);
+  const [events, setEvents] = useState(MOCK_SOS_EVENTS);
+  const [sosActive, setSosActive] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState({});
+  const [aiLoading, setAiLoading] = useState(false);
+  const [powerCount, setPowerCount] = useState(0);
+  const [offlineMode] = useState(true);
+  const [tick, setTick] = useState(0);
+  const shakeRef = useRef(null);
+
+  const selectedEvent = events.find(e => e.id === selectedId);
+
+  // Live battery drain simulation
+  useEffect(() => {
+    const t = setInterval(() => {
+      setTick(n => n + 1);
+      setEvents(prev => prev.map(e => ({
+        ...e,
+        battery: Math.max(1, e.battery - (Math.random() > 0.9 ? 1 : 0)),
+        lastSeen: e.id === "SOS-001" ? `${Math.floor(Math.random() * 30)}s ago` : e.lastSeen,
+      })));
+    }, 3000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Shake detection
+  useEffect(() => {
+    let lastX = 0, lastY = 0, lastZ = 0;
+    const onMotion = (e) => {
+      const { x, y, z } = e.accelerationIncludingGravity || {};
+      if (!x) return;
+      const delta = Math.abs(x - lastX) + Math.abs(y - lastY) + Math.abs(z - lastZ);
+      if (delta > 25) setSosActive(true);
+      lastX = x; lastY = y; lastZ = z;
+    };
+    window.addEventListener("devicemotion", onMotion);
+    return () => window.removeEventListener("devicemotion", onMotion);
+  }, []);
+
+  const handlePowerPress = () => {
+    const n = powerCount + 1;
+    setPowerCount(n);
+    if (n >= 5) { setSosActive(true); setPowerCount(0); }
+    setTimeout(() => setPowerCount(p => Math.max(0, p - 1)), 2000);
+  };
+
+  const analyzeWithAI = useCallback(async (event) => {
+    if (!event || aiAnalysis[event.id]) return;
+    setAiLoading(true);
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          messages: [{
+            role: "user",
+            content: `คุณคือระบบ AI วิเคราะห์เหตุฉุกเฉิน (Emergency AI) ของระบบ SOS Offline Network
+
+วิเคราะห์เหตุการณ์นี้แบบกระชับ มืออาชีพ เป็น Bullet points:
+
+ข้อมูลผู้ประสบเหตุ:
+- ชื่อ: ${event.name}
+- เหตุการณ์: ${event.event}
+- สถานะ: ${event.status} (${event.injury} injury)
+- แบตเตอรี่: ${event.battery}%
+- ช่องทางสื่อสาร: ${event.channel} (${event.hops} hops)
+- ความแม่นยำ GPS: ±${event.gpsAcc}m
+
+ให้วิเคราะห์ 4 หัวข้อ (แต่ละหัวข้อ 1-2 บรรทัด):
+🔴 ระดับความเร่งด่วน:
+📡 สถานะการสื่อสาร:
+🚁 คำแนะนำทีมกู้ภัย:
+⚠️ ความเสี่ยงที่ต้องระวัง:`
+          }],
+        }),
+      });
+      const data = await res.json();
+      const text = data.content?.map(b => b.text || "").join("") || "ไม่สามารถวิเคราะห์ได้";
+      setAiAnalysis(prev => ({ ...prev, [event.id]: text }));
+    } catch {
+      setAiAnalysis(prev => ({ ...prev, [event.id]: "⚠️ ไม่สามารถเชื่อมต่อ AI Engine\nระบบทำงานในโหมด Offline\nใช้การประเมินจากข้อมูลเซ็นเซอร์แทน" }));
+    }
+    setAiLoading(false);
+  }, [aiAnalysis]);
+
+  useEffect(() => {
+    if (selectedEvent) analyzeWithAI(selectedEvent);
+  }, [selectedEvent]);
+
+  const sortedEvents = [...events].sort((a, b) => {
+    const pri = { critical: 0, warning: 1, stable: 2, unknown: 3 };
+    return (pri[a.status] - pri[b.status]) || (a.battery - b.battery);
+  });
+
+  const criticalCount = events.filter(e => e.status === "critical").length;
+
+  return (
+    <div style={{ background: "#0A0E1A", minHeight: "100vh", color: "#F9FAFB", fontFamily: "'Inter', system-ui, sans-serif", position: "relative" }}>
+
+      {/* SOS Overlay */}
+      {sosActive && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(255,31,31,0.95)", zIndex: 1000, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", animation: "blink-sos 0.5s infinite" }}>
+          <div style={{ fontSize: 80, fontWeight: 900, letterSpacing: 8, color: "#FFF", textShadow: "0 0 40px rgba(255,255,255,0.5)" }}>SOS</div>
+          <div style={{ fontSize: 16, color: "rgba(255,255,255,0.9)", marginTop: 8 }}>กำลังส่งสัญญาณขอความช่วยเหลือ...</div>
+          <div style={{ marginTop: 24, display: "flex", gap: 12 }}>
+            {CHANNELS.filter(c => c.active).map(ch => (
+              <div key={ch.name} style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 24, animation: "blink-sos 0.8s infinite" }}>{ch.icon}</div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", marginTop: 4 }}>{ch.name}</div>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => setSosActive(false)} style={{ marginTop: 40, background: "rgba(255,255,255,0.2)", border: "2px solid #FFF", color: "#FFF", padding: "10px 28px", borderRadius: 6, cursor: "pointer", fontSize: 14, fontWeight: 600 }}>
+            ยกเลิก
+          </button>
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ background: "#111827", borderBottom: "1px solid #1F2937", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 100 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ position: "relative" }}>
+            <div style={{ width: 32, height: 32, background: "#FF1F1F", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🆘</div>
+            {criticalCount > 0 && <div style={{ position: "absolute", top: -4, right: -4, width: 14, height: 14, background: "#FF8C00", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 800, color: "#000", animation: "blink-sos 1s infinite" }}>{criticalCount}</div>}
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 0.5 }}>Emergency SOS</div>
+            <div style={{ fontSize: 9, color: "#6B7280", letterSpacing: 1, fontFamily: "monospace" }}>OFFLINE MESH NETWORK</div>
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: offlineMode ? "#FF8C00" : "#00C46A", animation: "blink-sos 1.5s infinite" }} />
+            <span style={{ fontSize: 10, color: offlineMode ? "#FF8C00" : "#00C46A", fontFamily: "monospace" }}>{offlineMode ? "OFFLINE MESH" : "ONLINE"}</span>
+          </div>
+          <SignalBars quality={73} />
+          <button onClick={handlePowerPress} style={{ background: "#FF1F1F", border: "none", color: "#FFF", padding: "5px 10px", borderRadius: 4, cursor: "pointer", fontSize: 10, fontWeight: 700 }}>
+            SOS {powerCount > 0 ? `(${powerCount}/5)` : ""}
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: "flex", background: "#111827", borderBottom: "1px solid #1F2937", overflowX: "auto" }}>
+        {[
+          { id: "dashboard", label: "Dashboard", icon: "◈" },
+          { id: "map", label: "แผนที่ Mesh", icon: "◎" },
+          { id: "sos-list", label: "รายการ SOS", icon: "⬡" },
+          { id: "channels", label: "ช่องสัญญาณ", icon: "◉" },
+        ].map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)} style={{
+            background: "none", border: "none", color: tab === t.id ? "#00D4FF" : "#6B7280",
+            borderBottom: tab === t.id ? "2px solid #00D4FF" : "2px solid transparent",
+            padding: "10px 16px", cursor: "pointer", fontSize: 12, fontWeight: tab === t.id ? 700 : 400,
+            whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 5, transition: "all 0.2s"
+          }}>
+            <span>{t.icon}</span>{t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: 14, maxWidth: 1100, margin: "0 auto" }}>
+
+        {/* DASHBOARD TAB */}
+        {tab === "dashboard" && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div style={{ gridColumn: "1/-1" }}>
+              <div style={{ color: "#9CA3AF", fontSize: 10, fontFamily: "monospace", letterSpacing: 1, marginBottom: 8 }}>◈ SITUATIONAL OVERVIEW</div>
+              <AIDashboard events={events} />
+            </div>
+
+            {/* Map preview */}
+            <div style={{ background: "#111827", border: "1px solid #1F2937", borderRadius: 10, overflow: "hidden" }}>
+              <div style={{ padding: "8px 12px", borderBottom: "1px solid #1F2937", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#00D4FF" }}>◎ Mesh Network Map</span>
+                <span style={{ fontSize: 9, color: "#4B5563", fontFamily: "monospace" }}>Live · {MOCK_NODES.filter(n => n.active).length} nodes</span>
+              </div>
+              <div style={{ height: 220 }}>
+                <MapCanvas events={events} nodes={MOCK_NODES} selectedId={selectedId} onSelect={setSelectedId} />
+              </div>
+            </div>
+
+            {/* AI Analysis panel */}
+            <div style={{ background: "#111827", border: "1px solid #1F2937", borderRadius: 10, padding: 14 }}>
+              <div style={{ color: "#7C3AED", fontSize: 11, fontWeight: 700, marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#7C3AED", animation: "blink-sos 1.5s infinite" }} />
+                AI Analysis Engine
+              </div>
+              <AIAnalysis event={selectedEvent} loading={aiLoading} analysis={selectedEvent ? aiAnalysis[selectedEvent.id] : null} />
+            </div>
+
+            {/* Priority list */}
+            <div style={{ gridColumn: "1/-1", background: "#111827", border: "1px solid #1F2937", borderRadius: 10, padding: 14 }}>
+              <div style={{ color: "#FF1F1F", fontSize: 11, fontWeight: 700, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#FF1F1F", animation: "blink-sos 0.8s infinite" }} />
+                Priority Queue — เรียงตามความเร่งด่วน
+              </div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                  <thead>
+                    <tr style={{ color: "#6B7280", borderBottom: "1px solid #1F2937" }}>
+                      {["ID", "ชื่อ", "เหตุการณ์", "สถานะ", "แบต.", "ช่องสัญญาณ", "Last Seen", ""].map(h => (
+                        <th key={h} style={{ padding: "6px 10px", textAlign: "left", fontWeight: 500, fontFamily: "monospace", fontSize: 10 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedEvents.map(ev => (
+                      <tr key={ev.id} onClick={() => { setSelectedId(ev.id); setTab("dashboard"); }}
+                        style={{ borderBottom: "1px solid #111827", cursor: "pointer", background: selectedId === ev.id ? "rgba(0,212,255,0.05)" : "transparent", transition: "background 0.15s" }}>
+                        <td style={{ padding: "7px 10px", fontFamily: "monospace", color: "#00D4FF", fontSize: 10 }}>{ev.id}</td>
+                        <td style={{ padding: "7px 10px", fontWeight: 600 }}>{ev.name}</td>
+                        <td style={{ padding: "7px 10px", color: "#9CA3AF" }}>{ev.event}</td>
+                        <td style={{ padding: "7px 10px" }}>
+                          <span style={{ background: statusColor(ev.status), color: "#000", fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 3 }}>{statusLabel(ev.status)}</span>
+                        </td>
+                        <td style={{ padding: "7px 10px" }}><BatteryBar pct={ev.battery} /></td>
+                        <td style={{ padding: "7px 10px", color: "#00D4FF", fontSize: 10 }}>{channelIcon[ev.channel]} {ev.channel}</td>
+                        <td style={{ padding: "7px 10px", color: "#4B5563", fontFamily: "monospace", fontSize: 9 }}>{ev.lastSeen}</td>
+                        <td style={{ padding: "7px 10px" }}>
+                          <button onClick={(e) => { e.stopPropagation(); setSelectedId(ev.id); setTab("dashboard"); }}
+                            style={{ background: "#1F2937", border: "1px solid #374151", color: "#9CA3AF", fontSize: 9, padding: "3px 8px", borderRadius: 3, cursor: "pointer" }}>
+                            AI วิเคราะห์
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MAP TAB */}
+        {tab === "map" && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 14, height: "calc(100vh - 130px)" }}>
+            <div style={{ background: "#111827", border: "1px solid #1F2937", borderRadius: 10, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+              <div style={{ padding: "10px 14px", borderBottom: "1px solid #1F2937", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", gap: 14 }}>
+                  {[["🔴", "SOS วิกฤต"], ["🟠", "เฝ้าระวัง"], ["🟢", "ปลอดภัย"], ["◈", "Relay Node"], ["▣", "Command"]].map(([icon, label]) => (
+                    <div key={label} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "#6B7280" }}>
+                      <span>{icon}</span>{label}
+                    </div>
+                  ))}
+                </div>
+                <span style={{ fontSize: 9, fontFamily: "monospace", color: "#4B5563" }}>OpenStreetMap · Offline Vector</span>
+              </div>
+              <div style={{ flex: 1 }}>
+                <MapCanvas events={events} nodes={MOCK_NODES} selectedId={selectedId} onSelect={setSelectedId} />
+              </div>
+            </div>
+            <div style={{ overflowY: "auto" }}>
+              <div style={{ fontSize: 10, color: "#6B7280", fontFamily: "monospace", marginBottom: 8 }}>SOS EVENTS ({events.length})</div>
+              {sortedEvents.map(ev => (
+                <SOSCard key={ev.id} event={ev} selected={selectedId === ev.id} onClick={() => setSelectedId(prev => prev === ev.id ? null : ev.id)} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* SOS LIST TAB */}
+        {tab === "sos-list" && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div>
+              <div style={{ fontSize: 10, color: "#6B7280", fontFamily: "monospace", marginBottom: 8 }}>◉ SOS EVENTS — {sortedEvents.length} เหตุการณ์</div>
+              {sortedEvents.map(ev => (
+                <SOSCard key={ev.id} event={ev} selected={selectedId === ev.id} onClick={() => setSelectedId(prev => prev === ev.id ? null : ev.id)} />
+              ))}
+            </div>
+            <div style={{ background: "#111827", border: "1px solid #1F2937", borderRadius: 10, padding: 14, height: "fit-content" }}>
+              <div style={{ color: "#7C3AED", fontSize: 11, fontWeight: 700, marginBottom: 12 }}>⬡ AI Analysis Engine</div>
+              <AIAnalysis event={selectedEvent} loading={aiLoading} analysis={selectedEvent ? aiAnalysis[selectedEvent.id] : null} />
+            </div>
+          </div>
+        )}
+
+        {/* CHANNELS TAB */}
+        {tab === "channels" && (
+          <div>
+            <div style={{ fontSize: 10, color: "#6B7280", fontFamily: "monospace", marginBottom: 12 }}>◉ MULTI-CHANNEL COMMUNICATION STATUS</div>
+            <div style={{ display: "grid", gap: 10 }}>
+              {CHANNELS.map((ch, i) => (
+                <div key={ch.name} style={{ background: "#111827", border: `1px solid ${ch.active ? ch.color + "40" : "#1F2937"}`, borderRadius: 10, padding: "14px 16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ width: 40, height: 40, background: ch.active ? ch.color + "20" : "#1F2937", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, border: `1px solid ${ch.active ? ch.color + "60" : "#374151"}` }}>
+                        {ch.icon}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: ch.active ? "#F9FAFB" : "#4B5563" }}>{ch.name}</div>
+                        <div style={{ fontSize: 10, color: "#6B7280", marginTop: 2 }}>Priority {i + 1} · {ch.active ? "ใช้งานได้" : "ไม่พร้อมใช้งาน"}</div>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <div style={{ width: 100, height: 6, background: "#1F2937", borderRadius: 3, overflow: "hidden" }}>
+                          <div style={{ width: `${ch.quality}%`, height: "100%", background: ch.active ? ch.color : "#374151", borderRadius: 3, transition: "width 1s" }} />
+                        </div>
+                        <span style={{ color: ch.active ? ch.color : "#4B5563", fontSize: 12, fontWeight: 700, fontFamily: "monospace", width: 36, textAlign: "right" }}>{ch.quality}%</span>
+                      </div>
+                      <div style={{ fontSize: 9, color: "#4B5563", marginTop: 4, fontFamily: "monospace" }}>Signal Quality</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop: 16, background: "#111827", border: "1px solid #1F2937", borderRadius: 10, padding: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#00C46A", marginBottom: 10 }}>⬡ Mesh Network Nodes</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 8 }}>
+                {MOCK_NODES.map(n => {
+                  const col = n.type === "command" ? "#7C3AED" : n.type === "gateway" ? "#FF8C00" : "#00D4FF";
+                  return (
+                    <div key={n.id} style={{ background: "#0A0E1A", border: `1px solid ${n.active ? col + "40" : "#1F2937"}`, borderRadius: 8, padding: "10px 12px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                        <span style={{ color: col, fontSize: 11, fontFamily: "monospace", fontWeight: 700 }}>{n.id}</span>
+                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: n.active ? "#00C46A" : "#4B5563", animation: n.active ? "blink-sos 2s infinite" : undefined }} />
+                      </div>
+                      <div style={{ fontSize: 9, color: "#6B7280" }}>{n.type.toUpperCase()}</div>
+                      <div style={{ marginTop: 6 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
+                          <span style={{ fontSize: 9, color: "#4B5563" }}>Signal</span>
+                          <span style={{ fontSize: 9, color: col, fontFamily: "monospace" }}>{n.signal}%</span>
+                        </div>
+                        <div style={{ height: 3, background: "#1F2937", borderRadius: 2 }}>
+                          <div style={{ width: `${n.signal}%`, height: "100%", background: col, borderRadius: 2 }} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Floating SOS Button */}
+      <div style={{ position: "fixed", bottom: 20, right: 20, zIndex: 200 }}>
+        <button onClick={() => setSosActive(true)} style={{
+          width: 64, height: 64, borderRadius: "50%", background: "#FF1F1F",
+          border: "3px solid rgba(255,255,255,0.3)", color: "#FFF",
+          fontSize: 10, fontWeight: 900, cursor: "pointer", letterSpacing: 1,
+          boxShadow: "0 0 0 0 rgba(255,31,31,0.7)", animation: "pulse-ring 2s infinite",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <div style={{ textAlign: "center", lineHeight: 1.2 }}>
+            <div style={{ fontSize: 18 }}>🆘</div>
+            <div style={{ fontSize: 9 }}>SOS</div>
+          </div>
+        </button>
+        <div style={{ position: "absolute", top: -8, right: -4, background: "#FF8C00", color: "#000", fontSize: 8, fontWeight: 800, padding: "2px 5px", borderRadius: 8 }}>
+          ×5
+        </div>
+      </div>
+
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<EmergencySOS />);
+</script>
+</body>
+</html>
