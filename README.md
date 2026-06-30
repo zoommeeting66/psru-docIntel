@@ -5,10 +5,10 @@
 ## โครงสร้างโปรเจกต์
 | ไฟล์/โฟลเดอร์ | คำอธิบาย |
 |---------------|----------|
-| `index.html` | เว็บไซต์ Internationalization & Kenya Sandbox |
-| `campus-map.html` | แผนที่วิทยาเขต |
-| `doc-intelligence.html` | ต้นแบบ **DocIntel** — ระบบจัดเก็บ/ค้นหา/วิเคราะห์เอกสารอัจฉริยะ (frontend) |
+| `index.html` | **หน้าแรก (Landing)** — รวมลิงก์เข้าสู่ระบบต่าง ๆ |
 | `executive-dashboard.html` | **Executive Pulse** — แดชบอร์ดติดตามการเข้าร่วมกิจกรรมของผู้บริหาร (ใช้งานบนเบราว์เซอร์ ไฟล์เดียว) |
+| `docintel.html` | ต้นแบบ **DocIntel** — ระบบจัดเก็บ/ค้นหา/วิเคราะห์เอกสารอัจฉริยะ (frontend) |
+| `.github/workflows/pages.yml` | GitHub Actions เผยแพร่เว็บขึ้น GitHub Pages อัตโนมัติเมื่อ push เข้า `main` |
 | `backend/` | **Backend จริง** — Cloudflare Worker API + D1 (เอกสาร + ค้นหา) |
 
 ## Executive Pulse — แดชบอร์ดการเข้าร่วมกิจกรรมของผู้บริหาร
