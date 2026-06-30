@@ -7,6 +7,7 @@
 <meta name="description" content="แดชบอร์ดผู้บริหาร มหาวิทยาลัยราชภัฏพิบูลสงคราม — ติดตามและวิเคราะห์การเข้าร่วมกิจกรรมของทีมบริหารรายสัปดาห์">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -173,8 +174,16 @@ tailwind.config = {
           <div class="flex-1 min-w-[240px]">
             <h3 class="font-bold text-psru-navy dark:text-white mb-1">โครงสร้างแบบสำรวจการเข้าร่วมกิจกรรม</h3>
             <p class="text-xs text-psru-textLight mb-3">กรอกฟอร์มเอง หรือกด <b>“สร้างฟอร์มอัตโนมัติ”</b> เพื่อเติมรายชื่อผู้บริหารทั้ง 10 ท่านให้พร้อมติ๊กทันที</p>
-            <label class="block text-xs font-semibold text-psru-textDark dark:text-slate-200 mb-1">ช่วงสัปดาห์ / หัวข้อสำรวจ</label>
-            <input id="bLabel" type="text" placeholder="เช่น 6–12 ก.ค. 69" class="w-full sm:w-72 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-psru-gold">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
+              <div>
+                <label class="block text-xs font-semibold text-psru-textDark dark:text-slate-200 mb-1">ช่วงสัปดาห์ / หัวข้อสำรวจ</label>
+                <input id="bLabel" type="text" placeholder="เช่น 6–12 ก.ค. 69" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-psru-gold">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-psru-textDark dark:text-slate-200 mb-1">กำหนดปิดรับคำตอบ (deadline)</label>
+                <input id="bDeadline" type="datetime-local" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-psru-gold">
+              </div>
+            </div>
           </div>
           <div class="flex flex-wrap items-end gap-2">
             <div>
@@ -183,6 +192,7 @@ tailwind.config = {
             </div>
             <button onclick="builderAuto()" class="px-4 py-2 rounded-xl gradient-navy text-white text-sm font-semibold hover:opacity-90"><i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>สร้างฟอร์มอัตโนมัติ</button>
             <button onclick="builderAddActivity()" class="px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm font-semibold text-psru-textDark dark:text-slate-200 hover:border-psru-gold"><i class="fa-solid fa-plus mr-1.5"></i>เพิ่มกิจกรรม</button>
+            <label class="px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm font-semibold text-psru-textDark dark:text-slate-200 hover:border-psru-gold cursor-pointer"><i class="fa-solid fa-file-import mr-1.5"></i>นำเข้า Excel/CSV<input type="file" accept=".xlsx,.xls,.csv" class="hidden" onchange="builderImportFile(event)"></label>
           </div>
         </div>
       </div>
@@ -227,6 +237,9 @@ tailwind.config = {
     <div id="modalBody"></div>
   </div>
 </div>
+
+<!-- ===================== RESPOND SCREEN (เปิดจากลิงก์ตอบ) ===================== -->
+<div id="respondScreen" class="fixed inset-0 z-[90] bg-psru-bgLight overflow-y-auto hidden"></div>
 
 <script id="data" type="application/json">[{"id":0,"label":"11–17 พ.ค. 69","sheet":"11-21 พ.ค 69","activities":[{"id":"0-0","title":"รองอธิการบดี/ผช.อธิการบดี : ประชุมเชิงปฏิบัติการ (ยกร่าง) ตัวชี้วัดค่าเป้าหมายของแผนปฏิบัติราชการ","when":"วันอังคาร, 12 พฤษภาคม⋅1:00 – 4:30pm","where":"ห้องประชุมชั้น 2 สทด.","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"absent"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"pending"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"attend"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"attend"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"absent"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"absent"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"attend"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"pending"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"attend"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"absent"}]},{"id":"0-1","title":"อธิการบดี/5 รอง : ประชุม กบม.","when":"วันศุกร์, 15 พฤษภาคม⋅9:00am – 12:00pm","where":"ท.410","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"attend"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"attend"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"attend"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"absent"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"attend"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"attend"}]},{"id":"0-2","title":"อธิการบดี/ทีมบริหาร : บันทึกเทปถวายพระพรชัยมงคล สมเด็จพระนางเจ้าฯ พระบรมราชินี","when":"วันพฤหัสบดี, 21 พฤษภาคม⋅2:00 – 2:30pm","where":"ห้องแสดงส่วนบริหารกิจการโทรทัศน์ ภาคเหนือ จ.พิษณุโลก","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"attend"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"attend"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"attend"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"attend"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"absent"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"attend"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"attend"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"attend"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"attend"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"absent"}]}]},{"id":1,"label":"18–24 พ.ค. 69","sheet":"18-24 พ.ค 69","activities":[{"id":"1-0","title":"ทีมบริหาร : พิธีบวงสรวง เจริญพระพุทธมนต์และร่วมกวนข้าวทิพย์มหามงคล","when":"วันอังคาร, 19 พฤษภาคม10.00 am – 4:30pm วัดหลวงพ่อโต","where":"","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"absent"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"absent"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"attend"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"attend"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"absent"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"absent"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"attend"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"absent"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"attend"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"absent"}]},{"id":"1-1","title":"ทีมบริหาร : เข้าร่วมพิธีเจริญพระพุทธมนต์ ทำบุญตักบาตรและถวายข้าวทิพย์","when":"วันพุธ, 20 พฤษภาคม⋅7:30am – 3:30pm วัดหลวงพ่อโต","where":"","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"absent"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"absent"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"absent"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"attend"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"absent"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"pending"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"attend"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"absent"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"absent"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"absent"}]},{"id":"1-2","title":"อธิการบดี/ทีมบริหาร : บันทึกเทปถวายพระพรชัยมงคล สมเด็จพระนางเจ้าฯ พระบรมราชินี","when":"วันพฤหัสบดี, 21 พฤษภาคม⋅2:00 – 2:30pm","where":"ห้องแสดงส่วนบริหารกิจการโทรทัศน์ ภาคเหนือ จ.พิษณุโลก","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"attend"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"attend"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"attend"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"attend"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"absent"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"attend"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"attend"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"attend"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"attend"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"absent"}]},{"id":"1-3","title":"อธิการบดี/ทีมบริหาร : คณะกรรมการติดตามตรวจสอบมหาวิทยาลัย (สัมภาษณ์ผู้บริหาร)","when":"วันศุกร์, 22 พฤษภาคม⋅1:30 – 3:00pm ท.410","where":"","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"attend"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"attend"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"attend"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"attend"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"absent"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"attend"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"attend"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"attend"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"attend"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"absent"}]},{"id":"1-4","title":"อธิการบดี/ทีมบริหาร : ประชุมสภามหาวิทยาลัย (5/2569)","when":"วันเสาร์, 23 พฤษภาคม⋅9:00am – 12:00pm ห้องประชุม Conference Room 3 ชั้น 3 คณะ มนุษยศาสตร์และสังคมศาสตร์","where":"","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"attend"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"attend"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"attend"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"attend"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"attend"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"attend"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"attend"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"attend"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"attend"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"attend"}]}]},{"id":2,"label":"30 พ.ค.–7 มิ.ย. 69","sheet":"30 พค.-7 มิ.ย","activities":[{"id":"2-0","title":"อธิการบดี/ทีมบริหาร : พิธีเจริญพระพุทธมนต์และพิธีกวนข้าวทิพย์","when":"วันเสาร์, 30 พฤษภาคม เวลา 10:00am – 12:00pm","where":"วัดแสงดาว","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"attend"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"absent"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"absent"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"attend"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"absent"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"absent"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"attend"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"absent"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"attend"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"absent"}]},{"id":"2-1","title":"ทีมบริหาร : ร่วมพิธีเจริญพระพุทธมนต์ ทำบุญตักบาตรและถวายข้าวทิพย์","when":"วันอาทิตย์, 31 พฤษภาคม เวลา 8:00 – 10:00am","where":"วัดแสงดาว","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"absent"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"absent"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"absent"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"attend"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"absent"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"absent"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"attend"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"absent"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"attend"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"attend"}]},{"id":"2-2","title":"อธิการบดี/ทีมบริหาร : เข้าร่วมกิจกรรม PSRU Next Gen Engagement","when":"วันพฤหัสบดี, 4 มิถุนายน เวลา 9:45 – 10:45am","where":"หอประชุมศรีวชิรโชติ","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"attend"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"attend"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"attend"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"attend"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"attend"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"attend"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"absent"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"attend"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"attend"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"attend"}]},{"id":"2-3","title":"อธิการบดี/ทีมบริหาร : เปิดศูนย์การเรียนรู้สวนป่าพันธุ์ไม้หายาก","when":"วันเสาร์, 6 มิถุนายน เวลา 9:00 – 10:30am","where":"สวนป่าพันธุ์ไม้หายาก","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"attend"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"attend"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"attend"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"absent"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"attend"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"attend"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"absent"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"attend"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"attend"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"absent"}]}]},{"id":3,"label":"8–14 มิ.ย. 69","sheet":"8-14 มิ.ย 69","activities":[{"id":"3-0","title":"อธิการบดี/ทีมบริหาร : ประชุม pre school","when":"วันพุธ, 10 มิถุนายน เวลา 9:00am – 12:00pm","where":"ห้องประชุมพิบูล 216 (800 ที่นั่ง) อาคารพิบูลวิชญ์","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"pending"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"attend"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"attend"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"attend"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"attend"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"absent"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"attend"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"attend"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"pending"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"attend"}]},{"id":"3-1","title":"อธิการบดี/ทีมบริหาร : ปฐมนิเทศนักศึกษา","when":"วันศุกร์, 12 มิถุนายน เวลา 8:30am – 3:00pm","where":"หอประชุมศรีวชิรโชติ","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"attend"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"attend"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"pending"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"attend"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"attend"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"absent"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"attend"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"attend"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"attend"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"attend"}]},{"id":"3-2","title":"อธิการบดี/ทีมบริหาร : อธิการบดี/ทีมบริหาร : โครงการ Up skill พัฒนาทักษะชีวิตนักศึกษาหอพักด้วยกระบวนการวิศวกรสังคม","when":"วันเสาร์, 13 มิถุนายน เวลา 8:40 น. และ 14.00 น.","where":"Pibul 302","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"pending"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"pending"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"attend"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"pending"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"attend"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"absent"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"pending"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"pending"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"pending"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"pending"}]},{"id":"3-3","title":"อธิการบดี/ทีมบริหาร : เปิดศูนย์การเรียนรู้สวนป่าพันธุ์ไม้หายาก","when":"วันเสาร์, 6 มิถุนายน เวลา 9:00 – 10:30am","where":"สวนป่าพันธุ์ไม้หายาก","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"attend"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"attend"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"attend"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"absent"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"attend"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"attend"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"absent"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"attend"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"attend"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"absent"}]}]},{"id":4,"label":"21–28 มิ.ย. 69","sheet":"21-28 มิ.ย 69","activities":[{"id":"4-0","title":"อธิการบดี/ทีมบริหาร : ร่วมพิธีบำเพ็ญกุศลสวดพระอภิธรรม เพื่ออุทิศถวายพระกุศลแด่สมเด็จพระเจ้าลูกเธอ เจ้าฟ้าพัชรกิติยาภา นเรนทิราเทพวดี กรมหลวงราชสาริณีสิริพัชร มหาวัชรราชธิดา","when":"วันอาทิตย์, 21 มิถุนายน เวลา 18.00 - 20.00 น.","where":"","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"attend"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"attend"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"absent"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"attend"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"absent"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"absent"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"attend"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"attend"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"absent"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"attend"}]},{"id":"4-1","title":"อธิการบดี/ทีมบริหาร : เข้าร่วมพิธีเปิดการประกวดทุเรียน ของดีเมืองพิษณุโลก ครั้งที่ ๓","when":"วันศุกร์, 26 มิถุนายน เวลา 15.00 - 16.00 น.","where":"","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"attend"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"attend"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"attend"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"attend"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"attend"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"absent"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"attend"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"absent"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"attend"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"attend"}]},{"id":"4-2","title":"อธิการบดี/ทีมบริหาร : เข้าร่วมงานรอยยิ้มริมท่า ย่านท่ามะปราง และมอบรางวัลภูมิภัฏ (Mou 11 รร.)","when":"วันศุกร์, 26 มิถุนายน เวลา 18.30 -19.30 น.","where":"","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"attend"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"pending"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"pending"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"attend"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"attend"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"absent"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"attend"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"pending"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"absent"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"absent"}]},{"id":"4-3","title":"อธิการบดี/ทีมบริหาร : เปิดศูนย์การเรียนรู้สวนป่าพันธุ์ไม้หายาก","when":"วันเสาร์, 6 มิถุนายน เวลา 9:00 – 10:30am","where":"สวนป่าพันธุ์ไม้หายาก","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"attend"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"attend"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"attend"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"absent"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"attend"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"attend"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"absent"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"attend"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"attend"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"absent"}]}]},{"id":5,"label":"3–5 ก.ค. 69","sheet":"งานเลี้ยง กพ. 3-5 ก.ค 69","activities":[{"id":"5-0","title":"ผู้บริหารร่วมงานเลี้ยงรับรองทีม กพ.","when":"ช่วงเย็น วันที่ 3 ก.ค. 2569","where":"ร้านเจ๊โชค","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"pending"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"pending"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"absent"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"pending"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"absent"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"absent"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"pending"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"pending"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"pending"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"pending"}]},{"id":"5-1","title":"ผู้บริหารร่วมงานเลี้ยงรับรองทีม กพ.","when":"ช่วงเย็น วันที่ 4 ก.ค. 2569","where":"ช่อมาลี","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"pending"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"pending"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"absent"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"pending"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"attend"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"absent"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"pending"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"pending"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"pending"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"pending"}]},{"id":"5-2","title":"ผู้บริหารร่วมงานเลี้ยงรับรองทีม กพ.","when":"ช่วงเย็น วันที่ 5 ก.ค. 2569","where":"องปางอุบล รร.วังจันทร์ริเวอร์วิว","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"pending"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"pending"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"absent"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"pending"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"attend"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"absent"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"pending"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"pending"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"pending"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"pending"}]},{"id":"5-3","title":"อธิการบดี/ทีมบริหาร : เปิดศูนย์การเรียนรู้สวนป่าพันธุ์ไม้หายาก","when":"วันเสาร์, 6 มิถุนายน เวลา 9:00 – 10:30am","where":"สวนป่าพันธุ์ไม้หายาก","attendees":[{"no":1,"name":"ผศ.ดร.ชุมพล เสมาขันธ์","position":"อธิการบดี","status":"attend"},{"no":2,"name":"ผศ.ดร.พิทักษ์ อยู่มี","position":"รองอธิการบดีฝ่ายบริหาร","status":"attend"},{"no":3,"name":"รศ.ดร.โชติ บดีรัฐ","position":"รองอธิการบดีฝ่ายแผนและยุทธศาสตร์","status":"attend"},{"no":4,"name":"รศ.ดร.สนิท ปิ่นสกุล","position":"รองอธิการบดีฝ่ายพัฒนาบัณฑิต","status":"absent"},{"no":5,"name":"ศ.ดร.คงศักดิ์ ศรีแก้ว","position":"รองอธิการบดีฝ่ายนวัตกรรมและผู้ประกอบการ","status":"attend"},{"no":6,"name":"ผศ.ดร.บัญชา ศรีสมบัติ","position":"รองอธิการบดีฝ่ายโครงสร้างพื้นฐานและสารสนเทศ","status":"attend"},{"no":7,"name":"ผศ.ว่าที่ ร.ต.ดร.บัญชา สำรวยรื่น","position":"ผู้ช่วยอธิการบดีฝ่ายกิจการนักศึกษา และวิเทศสัมพันธ์","status":"absent"},{"no":8,"name":"ผศ.ดร.ชาติชาย จันทร์ประทีป","position":"ผู้ช่วยอธิการบดีฝ่ายพัฒนาอาคารสถานที่","status":"attend"},{"no":9,"name":"รศ.ดร.ประสิทธิชัย นรากรณ์","position":"ผู้ช่วยอธิการบดีฝ่ายบริหารสินทรัพย์และการลงทุน","status":"attend"},{"no":10,"name":"ผศ. ดร.ปิยวรรณ ศุภวิทิตพัฒนา","position":"ผู้ช่วยอธิการบดีฝ่ายมาตรฐานวิชาการ","status":"absent"}]}]}]</script>
 <script>
@@ -630,8 +643,10 @@ function renderBuilder(){
 }
 function draftToWeek(){
   const label=(document.getElementById('bLabel').value||'').trim() || ('แบบสำรวจใหม่ '+new Date().toLocaleDateString('th-TH'));
+  const dl=(document.getElementById('bDeadline').value||'').trim();
   return {
-    label, custom:true,
+    sid:'s'+Date.now().toString(36), label, custom:true,
+    deadline: dl ? new Date(dl).getTime() : null,
     activities: BD.activities.map(a=>({
       title:(a.title||'').trim()||'(ไม่ระบุชื่อกิจกรรม)', when:(a.when||'').trim(), where:(a.where||'').trim(),
       attendees: DEFAULT_ROSTER.map(p=>({no:p.no,name:p.name,position:p.position,status:a.st[p.no]||'pending'}))
@@ -641,21 +656,32 @@ function draftToWeek(){
 function builderSave(){
   if(!BD.activities.length){ toast('ยังไม่มีกิจกรรม',false); return; }
   CUSTOM.push(draftToWeek()); saveCustom(CUSTOM);
-  BD={activities:[]}; document.getElementById('bLabel').value=''; renderBuilder();
+  BD={activities:[]}; document.getElementById('bLabel').value=''; document.getElementById('bDeadline').value=''; renderBuilder();
   rerenderAll();
   toast('บันทึกแล้ว — ผลรวมอัปเดตในทุกหน้าของแดชบอร์ด');
 }
+function dlText(ts){ if(!ts) return ''; const d=new Date(ts);
+  return d.toLocaleString('th-TH',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
 function renderBuilderSaved(){
   const el=document.getElementById('bSavedList'); if(!el) return;
   if(!CUSTOM.length){ el.innerHTML=`<div class="p-6 text-center text-sm text-psru-textLight">ยังไม่มีแบบสำรวจที่บันทึก</div>`; return; }
   el.innerHTML=CUSTOM.map((w,i)=>{
     let at=0,t=0; w.activities.forEach(a=>a.attendees.forEach(p=>{t++;if(p.status==='attend')at++;}));
     const rate=t?Math.round(at/t*100):0;
-    return `<div class="flex items-center gap-3 px-5 py-3 border-t border-slate-100">
-      <i class="fa-solid fa-clipboard-check text-psru-gold"></i>
-      <div class="flex-1 min-w-0"><div class="font-semibold text-psru-textDark dark:text-slate-200 truncate">${w.label}</div>
-        <div class="text-xs text-psru-textLight">${w.activities.length} กิจกรรม · อัตราเข้าร่วม ${rate}%</div></div>
-      <button onclick="builderDelete(${i})" class="text-rose-500 hover:text-rose-700 text-sm px-2" title="ลบ"><i class="fa-solid fa-trash-can"></i></button>
+    const closed=w.deadline&&Date.now()>w.deadline;
+    const dl=w.deadline?`<span class="${closed?'text-rose-500':'text-emerald-600'}"><i class="fa-regular fa-clock"></i> ${closed?'ปิดรับแล้ว':'ปิดรับ'} ${dlText(w.deadline)}</span>`:'<span class="text-slate-400">ไม่มีกำหนดปิด</span>';
+    return `<div class="px-5 py-3 border-t border-slate-100">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-clipboard-check text-psru-gold"></i>
+        <div class="flex-1 min-w-0"><div class="font-semibold text-psru-textDark dark:text-slate-200 truncate">${w.label}</div>
+          <div class="text-xs text-psru-textLight">${w.activities.length} กิจกรรม · อัตราเข้าร่วม ${rate}% · ${dl}</div></div>
+        <button onclick="builderDelete(${i})" class="text-rose-500 hover:text-rose-700 text-sm px-2" title="ลบ"><i class="fa-solid fa-trash-can"></i></button>
+      </div>
+      <div class="flex flex-wrap gap-2 mt-2 pl-7">
+        <button onclick="openShareLink(${i})" class="px-3 py-1.5 rounded-lg bg-psru-navy text-white text-xs font-semibold hover:opacity-90"><i class="fa-solid fa-link mr-1"></i>ลิงก์ให้ตอบ</button>
+        <button onclick="openCollect(${i})" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-xs font-semibold text-psru-textDark dark:text-slate-200 hover:border-psru-gold"><i class="fa-solid fa-inbox mr-1"></i>นำเข้าคำตอบ</button>
+        <button onclick="openResults(${i})" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-xs font-semibold text-psru-textDark dark:text-slate-200 hover:border-psru-gold"><i class="fa-solid fa-chart-pie mr-1"></i>สรุปผล</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -663,6 +689,210 @@ function builderDelete(i){
   if(!confirm('ลบแบบสำรวจนี้ออกจากแดชบอร์ด?')) return;
   CUSTOM.splice(i,1); saveCustom(CUSTOM); rerenderAll();
   toast('ลบแล้ว');
+}
+
+/* ===== shareable respond-link (serverless: encode survey in URL) ===== */
+function b64e(obj){ return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function b64d(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); return JSON.parse(decodeURIComponent(escape(atob(s)))); }
+function surveyPayload(w){ return {sid:w.sid||('s'+Math.random().toString(36).slice(2)), l:w.label, d:w.deadline||null,
+  a:w.activities.map(x=>({t:x.title,w:x.when,p:x.where}))}; }
+function respondLink(w){ const base=location.href.split('#')[0]; return base+'#r='+b64e(surveyPayload(w)); }
+function openShareLink(i){
+  const w=CUSTOM[i]; if(!w.sid){ w.sid='s'+Date.now().toString(36); saveCustom(CUSTOM); }
+  const link=respondLink(w);
+  const closed=w.deadline&&Date.now()>w.deadline;
+  openModal(modalHead('ลิงก์ให้ผู้บริหารเข้ามาตอบ',w.label)+`
+    <div class="p-5 space-y-3">
+      <p class="text-sm text-psru-textLight">ส่งลิงก์นี้ให้ผู้บริหารผ่าน LINE/อีเมล ผู้รับเปิดแล้วเลือกชื่อตนเองและติ๊ก เข้าร่วม/ไม่เข้าร่วม ${w.deadline?'ระบบจะ<b>ปิดรับอัตโนมัติ</b>เมื่อถึง '+dlText(w.deadline):'(ยังไม่ได้ตั้งกำหนดปิด)'}</p>
+      ${closed?'<div class="p-2 rounded-lg bg-rose-50 text-rose-600 text-xs">หมายเหตุ: เลยกำหนดปิดรับแล้ว ผู้ตอบจะเห็นหน้าปิดรับ</div>':''}
+      <textarea readonly id="shareUrl" class="w-full h-24 p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-xs break-all">${link}</textarea>
+      <div class="flex flex-wrap gap-2">
+        <button onclick="copyText(document.getElementById('shareUrl').value)" class="px-4 py-2 rounded-xl gradient-navy text-white text-sm font-semibold"><i class="fa-solid fa-copy mr-1.5"></i>คัดลอกลิงก์</button>
+        <a href="https://line.me/R/share?text=${encodeURIComponent('แบบสำรวจการเข้าร่วมกิจกรรม: '+w.label+'\n'+link)}" target="_blank" class="px-4 py-2 rounded-xl bg-[#06C755] text-white text-sm font-semibold"><i class="fa-brands fa-line mr-1.5"></i>แชร์ผ่าน LINE</a>
+        <a href="${respondLink(w)}" target="_blank" class="px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm font-semibold text-psru-textDark dark:text-slate-200"><i class="fa-solid fa-up-right-from-square mr-1.5"></i>เปิดดูหน้าตอบ</a>
+      </div>
+      <p class="text-xs text-psru-textLight">ผู้ตอบกด “ส่งคำตอบ” แล้วจะได้รหัสคำตอบกลับมา ให้ส่งกลับหาผู้ดูแล แล้วนำเข้าด้วยปุ่ม “นำเข้าคำตอบ”</p>
+    </div>`);
+}
+function copyText(t){ navigator.clipboard?.writeText(t).then(()=>toast('คัดลอกแล้ว')).catch(()=>toast('คัดลอกไม่สำเร็จ',false)); }
+
+/* ===== collect responses (paste answer codes) ===== */
+function openCollect(i){
+  const w=CUSTOM[i];
+  openModal(modalHead('นำเข้าคำตอบจากผู้บริหาร',w.label)+`
+    <div class="p-5 space-y-3">
+      <p class="text-sm text-psru-textLight">วางรหัสคำตอบที่ได้รับ (วางได้หลายรหัส บรรทัดละ 1 รหัส) แล้วกดนำเข้า — ระบบจะอัปเดตสถานะการเข้าร่วมและรวมผลให้</p>
+      <textarea id="collectBox" class="w-full h-32 p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-xs" placeholder="วางรหัสคำตอบที่นี่..."></textarea>
+      <button onclick="importAnswers(${i})" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold"><i class="fa-solid fa-inbox mr-1.5"></i>นำเข้าคำตอบ</button>
+    </div>`);
+}
+function importAnswers(i){
+  const w=CUSTOM[i];
+  const raw=(document.getElementById('collectBox').value||'').trim();
+  if(!raw){ toast('ยังไม่ได้วางรหัสคำตอบ',false); return; }
+  let ok=0,fail=0;
+  raw.split(/\s+/).filter(Boolean).forEach(code=>{
+    try{
+      let c=code; const m=code.match(/#a=([^\s]+)/); if(m) c=m[1];
+      const ans=b64d(c);             // {sid, no, ans:[status,...]}
+      if(ans.sid && w.sid && ans.sid!==w.sid){ fail++; return; }
+      w.activities.forEach((act,ai)=>{
+        const st=ans.ans[ai]; if(!st) return;
+        const pr=act.attendees.find(p=>p.no===ans.no);
+        if(pr) pr.status=st;
+      });
+      ok++;
+    }catch(e){ fail++; }
+  });
+  saveCustom(CUSTOM); rerenderAll(); closeModal();
+  toast(`นำเข้าสำเร็จ ${ok} รายการ${fail?(' · ผิดพลาด '+fail):''}`, fail&&!ok?false:true);
+}
+
+/* ===== results summary ===== */
+function openResults(i){
+  const w=CUSTOM[i];
+  const rows=w.activities.map((a,ai)=>{ const s=actStat(a);
+    return `<div class="px-4 py-2.5 border-t border-slate-100">
+      <div class="text-sm font-medium text-psru-textDark dark:text-slate-200">${ai+1}. ${a.title}</div>
+      <div class="text-xs mt-1"><span class="text-emerald-600">เข้าร่วม ${s.attend}</span> · <span class="text-rose-500">ไม่เข้าร่วม ${s.absent}</span> · <span class="text-slate-400">ไม่ระบุ ${s.pending}</span> · <b>${s.rate}%</b></div>
+    </div>`;}).join('');
+  openModal(modalHead('สรุปผลแบบสำรวจ',w.label)+`<div>${rows}</div>
+    <div class="p-4"><button onclick="closeModal()" class="w-full px-4 py-2 rounded-xl gradient-navy text-white text-sm font-semibold">ปิด</button></div>`);
+}
+
+/* ===== respondent screen (opened from #r= link) ===== */
+let RSP=null; // {survey, answers:[status...], no}
+function checkRespondRoute(){
+  const h=location.hash||'';
+  const m=h.match(/[#&]r=([^&]+)/);
+  if(!m) return false;
+  try{ RSP={survey:b64d(m[1]), no:null, answers:[]}; }catch(e){ return false; }
+  // hide the whole dashboard chrome so nothing shows behind the answer screen
+  ['sidebar','main','topbar','backdrop'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
+  document.getElementById('respondScreen').classList.remove('hidden');
+  renderRespond();
+  return true;
+}
+function renderRespond(){
+  const sv=RSP.survey, closed=sv.d&&Date.now()>sv.d;
+  const el=document.getElementById('respondScreen');
+  const head=`<div class="gradient-navy text-white p-6">
+      <div class="max-w-2xl mx-auto">
+        <div class="flex items-center gap-2 text-psru-gold text-xs mb-1"><i class="fa-solid fa-clipboard-list"></i> แบบสำรวจการเข้าร่วมกิจกรรม · PSRU</div>
+        <h1 class="text-xl font-extrabold">${escapeHtml(sv.l)}</h1>
+        ${sv.d?`<div class="text-sm mt-1 ${closed?'text-rose-300':'text-blue-100'}"><i class="fa-regular fa-clock"></i> ${closed?'ปิดรับคำตอบแล้ว':'กำหนดปิดรับ'} ${dlText(sv.d)}</div>`:''}
+      </div></div>`;
+  if(closed){
+    el.innerHTML=head+`<div class="max-w-2xl mx-auto p-6"><div class="card rounded-2xl p-10 text-center">
+      <i class="fa-solid fa-lock text-4xl text-rose-400 mb-3"></i>
+      <h2 class="font-bold text-psru-navy dark:text-white text-lg">ปิดรับคำตอบแล้ว</h2>
+      <p class="text-psru-textLight text-sm mt-1">แบบสำรวจนี้สิ้นสุดเมื่อ ${dlText(sv.d)} — ขออภัยในความไม่สะดวก</p></div></div>`;
+    return;
+  }
+  const picker=`<div class="card rounded-2xl p-5 mb-4">
+      <label class="block text-sm font-semibold text-psru-textDark dark:text-slate-200 mb-2">เลือกชื่อของท่าน</label>
+      <select id="rspName" onchange="rspPick(this.value)" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm">
+        <option value="">— กรุณาเลือก —</option>
+        ${DEFAULT_ROSTER.map(p=>`<option value="${p.no}" ${RSP.no===p.no?'selected':''}>${escapeHtml(shortName(p.name))} · ${escapeHtml(p.position)}</option>`).join('')}
+      </select></div>`;
+  let body='';
+  if(RSP.no){
+    body=sv.a.map((a,ai)=>{
+      const cur=RSP.answers[ai]||'pending';
+      return `<div class="card rounded-2xl p-4 mb-3">
+        <div class="font-semibold text-psru-navy dark:text-white">${ai+1}. ${escapeHtml(a.t)}</div>
+        <div class="text-xs text-psru-textLight mt-0.5 mb-3">${escapeHtml(a.w||'')}${a.p?' · '+escapeHtml(a.p):''}</div>
+        <div class="flex gap-2">
+          <button onclick="rspAns(${ai},'attend')" class="flex-1 py-2.5 rounded-xl border-2 text-sm font-semibold ${cur==='attend'?'bg-emerald-500 border-emerald-500 text-white':'border-slate-200 dark:border-slate-600 text-psru-textDark dark:text-slate-200'}"><i class="fa-solid fa-check mr-1"></i>เข้าร่วม</button>
+          <button onclick="rspAns(${ai},'absent')" class="flex-1 py-2.5 rounded-xl border-2 text-sm font-semibold ${cur==='absent'?'bg-rose-500 border-rose-500 text-white':'border-slate-200 dark:border-slate-600 text-psru-textDark dark:text-slate-200'}"><i class="fa-solid fa-xmark mr-1"></i>ไม่เข้าร่วม</button>
+        </div></div>`;
+    }).join('');
+    const done=RSP.answers.filter(x=>x&&x!=='pending').length;
+    body+=`<button onclick="rspSubmit()" class="w-full py-3 rounded-xl gradient-gold text-psru-navy font-extrabold mt-2"><i class="fa-solid fa-paper-plane mr-1.5"></i>ส่งคำตอบ (${done}/${sv.a.length})</button>`;
+  } else {
+    body=`<div class="card rounded-2xl p-6 text-center text-psru-textLight text-sm">กรุณาเลือกชื่อของท่านเพื่อเริ่มตอบ</div>`;
+  }
+  el.innerHTML=head+`<div class="max-w-2xl mx-auto p-4 sm:p-6">${picker}${body}
+    <div class="text-center text-xs text-psru-textLight mt-4">กองวิเทศสัมพันธ์ มหาวิทยาลัยราชภัฏพิบูลสงคราม</div></div>`;
+}
+function rspPick(no){ RSP.no=parseInt(no,10)||null; RSP.answers=RSP.survey.a.map(()=> 'pending'); renderRespond(); }
+function rspAns(ai,st){ RSP.answers[ai]=(RSP.answers[ai]===st?'pending':st); renderRespond(); }
+function rspSubmit(){
+  if(!RSP.no){ toast('กรุณาเลือกชื่อ',false); return; }
+  const p=DEFAULT_ROSTER.find(x=>x.no===RSP.no);
+  const code=b64e({sid:RSP.survey.sid, no:RSP.no, ans:RSP.answers.map(x=>x||'pending')});
+  const el=document.getElementById('respondScreen');
+  el.innerHTML=`<div class="gradient-navy text-white p-6"><div class="max-w-2xl mx-auto">
+      <h1 class="text-xl font-extrabold"><i class="fa-solid fa-circle-check text-psru-gold mr-2"></i>ส่งคำตอบเรียบร้อย</h1>
+      <p class="text-blue-100 text-sm mt-1">${escapeHtml(shortName(p.name))} · ${escapeHtml(RSP.survey.l)}</p></div></div>
+    <div class="max-w-2xl mx-auto p-4 sm:p-6 space-y-3">
+      <div class="card rounded-2xl p-5">
+        <p class="text-sm text-psru-textDark dark:text-slate-200 mb-2 font-semibold">กรุณาส่ง “รหัสคำตอบ” นี้กลับให้ผู้ดูแล (คัดลอกแล้วส่งทาง LINE/อีเมล)</p>
+        <textarea readonly id="ansCode" class="w-full h-24 p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-xs break-all">${code}</textarea>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <button onclick="copyText(document.getElementById('ansCode').value)" class="px-4 py-2 rounded-xl gradient-navy text-white text-sm font-semibold"><i class="fa-solid fa-copy mr-1.5"></i>คัดลอกรหัสคำตอบ</button>
+          <a href="https://line.me/R/share?text=${encodeURIComponent('คำตอบแบบสำรวจ ('+shortName(p.name)+'):\n'+code)}" target="_blank" class="px-4 py-2 rounded-xl bg-[#06C755] text-white text-sm font-semibold"><i class="fa-brands fa-line mr-1.5"></i>ส่งทาง LINE</a>
+        </div>
+      </div>
+      <button onclick="RSP.no=null;renderRespond();" class="text-sm text-psru-textLight underline">แก้ไขคำตอบ</button>
+    </div>`;
+}
+function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ===== Excel/CSV import into builder ===== */
+function builderImportFile(ev){
+  const f=ev.target.files[0]; if(!f) return;
+  const reader=new FileReader();
+  const isCsv=/\.csv$/i.test(f.name);
+  reader.onload=e=>{
+    try{
+      let rows;
+      if(isCsv){ rows=parseCSV(e.target.result); }
+      else {
+        if(typeof XLSX==='undefined'){ toast('ตัวอ่าน Excel ยังโหลดไม่เสร็จ ลองใหม่อีกครั้ง หรือใช้ไฟล์ CSV',false); return; }
+        const wb=XLSX.read(e.target.result,{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      }
+      ingestRows(rows, f.name);
+    }catch(err){ toast('นำเข้าไม่สำเร็จ: '+err.message,false); }
+    ev.target.value='';
+  };
+  if(isCsv) reader.readAsText(f,'utf-8'); else reader.readAsArrayBuffer(f);
+}
+function parseCSV(text){
+  const out=[]; let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){ const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+    else { if(c==='"')q=true; else if(c===','){row.push(cur);cur='';} else if(c==='\n'){row.push(cur);out.push(row);row=[];cur='';} else if(c!=='\r')cur+=c; }
+  }
+  if(cur!==''||row.length){ row.push(cur); out.push(row); }
+  return out;
+}
+// map a flat sheet (สัปดาห์,กิจกรรม,วันเวลา,สถานที่,ลำดับ,ชื่อ,ตำแหน่ง,สถานะ) into builder activities
+function ingestRows(rows, fname){
+  if(!rows||rows.length<2){ toast('ไฟล์ว่างหรือรูปแบบไม่ถูกต้อง',false); return; }
+  const header=rows[0].map(x=>String(x).trim());
+  const idx=name=>header.findIndex(h=>h.includes(name));
+  const ci={act:idx('กิจกรรม'),when:idx('วันเวลา')>=0?idx('วันเวลา'):idx('เวลา'),where:idx('สถานที่'),
+            no:idx('ลำดับ'),status:idx('สถานะ'),week:idx('สัปดาห์')};
+  if(ci.act<0){ toast('ไม่พบคอลัมน์ “กิจกรรม” — ใช้รูปแบบเดียวกับไฟล์ส่งออก CSV',false); return; }
+  const acts={}; let order=[];
+  const stMap={'เข้าร่วม':'attend','ไม่เข้าร่วม':'absent','ไม่ระบุ':'pending','attend':'attend','absent':'absent'};
+  rows.slice(1).forEach(r=>{
+    const title=String(r[ci.act]||'').trim(); if(!title) return;
+    if(!acts[title]){ acts[title]={title,when:ci.when>=0?String(r[ci.when]||'').trim():'',where:ci.where>=0?String(r[ci.where]||'').trim():'',st:{}}; order.push(title); DEFAULT_ROSTER.forEach(p=>acts[title].st[p.no]='pending'); }
+    const no=ci.no>=0?parseInt(r[ci.no],10):null;
+    const st=ci.status>=0?(stMap[String(r[ci.status]||'').trim()]||'pending'):'pending';
+    if(no&&acts[title].st[no]!==undefined) acts[title].st[no]=st;
+  });
+  if(!order.length){ toast('ไม่พบข้อมูลกิจกรรม',false); return; }
+  BD.activities=order.map(t=>acts[t]);
+  const wk=ci.week>=0 && rows[1] ? String(rows[1][ci.week]||'').trim():'';
+  if(wk) document.getElementById('bLabel').value=wk;
+  renderBuilder();
+  nav('builder');
+  toast('นำเข้า '+order.length+' กิจกรรมจากไฟล์แล้ว');
 }
 function builderClear(){ if(!BD.activities.length||confirm('ล้างฟอร์มที่กำลังกรอก?')){ BD={activities:[]}; document.getElementById('bLabel').value=''; renderBuilder(); } }
 function builderExportJSON(){
@@ -717,12 +947,18 @@ function builderPrint(){
 
 /* ============================ INIT ============================ */
 document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeModal(); });
-// content first (never depends on external libs), charts last (Chart.js via CDN)
-renderKPI(); renderInsights(); renderMatrix(); renderWeekTabs(); renderWeek(); renderPeople();
-renderBuilder(); renderBuilderSaved();
-if(document.documentElement.classList.contains('dark')) document.getElementById('darkIcon').className='fa-solid fa-sun';
-function bootCharts(tries){ if(typeof Chart!=='undefined'){ renderCharts(); } else if((tries||0)<40){ setTimeout(()=>bootCharts((tries||0)+1),150); } }
-bootCharts();
+// respondent link mode (#r=...) — show only the answer screen
+if(checkRespondRoute()){
+  // still init dark icon for consistency; dashboard stays hidden under overlay
+  if(document.documentElement.classList.contains('dark')) document.getElementById('darkIcon').className='fa-solid fa-sun';
+} else {
+  // content first (never depends on external libs), charts last (Chart.js via CDN)
+  renderKPI(); renderInsights(); renderMatrix(); renderWeekTabs(); renderWeek(); renderPeople();
+  renderBuilder(); renderBuilderSaved();
+  if(document.documentElement.classList.contains('dark')) document.getElementById('darkIcon').className='fa-solid fa-sun';
+  function bootCharts(tries){ if(typeof Chart!=='undefined'){ renderCharts(); } else if((tries||0)<40){ setTimeout(()=>bootCharts((tries||0)+1),150); } }
+  bootCharts();
+}
 </script>
 </body>
 </html>
