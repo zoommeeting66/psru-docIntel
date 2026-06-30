@@ -4,6 +4,7 @@ import { AuthControls } from "./AuthControls";
 
 const nav = [
   { href: "/kiosk", label: "Kiosk", icon: "fa-camera-retro" },
+  { href: "/vr", label: "VR", icon: "fa-vr-cardboard" },
   { href: "/dashboard", label: "Executive", icon: "fa-chart-line" },
 ];
 

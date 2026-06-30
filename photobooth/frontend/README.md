@@ -25,7 +25,8 @@ cd ../backend && source .venv/bin/activate && uvicorn app.main:app --reload
 |-------|----------|
 | `/` | Landing |
 | `/kiosk` | **Kiosk flow** เต็ม: Consent (PDPA) → ถ่ายภาพ (webcam) → เลือกฉาก/ชุด/FX → AI render (WebSocket progress) → ผลลัพธ์ + QR/ดาวน์โหลด/แชร์/ให้คะแนน |
-| `/dashboard` | Executive Dashboard อ่านสถิติจริงจาก `/stats/overview` + `/stats/scenes` |
+| `/vr` | **VR / 360° viewer** (Three.js) — ลากมองรอบทิศ, เลือกฉาก, ปุ่ม Enter VR (WebXR); ฉากสร้าง panorama แบบ procedural (Phase 2 สลับเป็น HDRI/360 จริง) |
+| `/dashboard` | Executive Dashboard อ่านสถิติจริงจาก `/stats/overview` + `/stats/scenes` (ต้องล็อกอิน) |
 
 ## โครงสร้าง
 

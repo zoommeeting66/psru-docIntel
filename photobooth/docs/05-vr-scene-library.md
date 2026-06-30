@@ -37,6 +37,11 @@ scene/{slug}/
 | Heritage | วัดไทย | ✅ | — |
 | Heritage | เมืองโบราณ | ✅ | — |
 
+> **สถานะการพัฒนา:** มี **360° viewer ใช้งานจริงแล้ว** ในแอป Next.js ที่เส้นทาง `/vr`
+> (Three.js, sphere แบบ inward-facing + drag-to-look + auto-rotate + รองรับ WebXR `Enter VR`)
+> Phase 1 ใช้ panorama แบบ procedural ต่อฉาก (`frontend/src/lib/panorama.ts`) — Phase 2 สลับ
+> texture เป็น HDRI/ภาพ 360° จริงจากคลังฉากนี้ และโหลด glTF สำหรับ walkthrough
+
 ## 5.3 VR Modes
 
 ```mermaid

@@ -8,6 +8,12 @@ const cards = [
     desc: "ยืนหน้ากล้อง เลือกฉาก/ชุด แล้วให้ AI สร้างภาพระดับสตูดิโอภายในไม่กี่วินาที",
   },
   {
+    href: "/vr",
+    icon: "fa-vr-cardboard",
+    title: "VR / 360°",
+    desc: "ชมฉากเสมือนของ PSRU แบบ 360° ลากมองรอบทิศ รองรับแว่น VR (WebXR)",
+  },
+  {
     href: "/dashboard",
     icon: "fa-chart-line",
     title: "Executive Dashboard",
@@ -31,7 +37,7 @@ export default function Home() {
         </p>
       </section>
 
-      <div className="grid sm:grid-cols-2 gap-5">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {cards.map((c) => (
           <Link
             key={c.href}
