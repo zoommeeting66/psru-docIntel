@@ -195,6 +195,13 @@ tailwind.config = {
             <label class="px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm font-semibold text-psru-textDark dark:text-slate-200 hover:border-psru-gold cursor-pointer"><i class="fa-solid fa-file-import mr-1.5"></i>นำเข้า Excel/CSV<input type="file" accept=".xlsx,.xls,.csv" class="hidden" onchange="builderImportFile(event)"></label>
           </div>
         </div>
+        <!-- online backend config -->
+        <div class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center gap-2">
+          <span class="text-xs font-semibold text-psru-textDark dark:text-slate-200"><i class="fa-solid fa-cloud mr-1 text-psru-royal"></i>โหมดออนไลน์ (ผู้บริหารกดส่งแล้วเข้าระบบทันที):</span>
+          <input id="bApi" type="url" placeholder="วาง Backend URL เช่น https://psru-docintel-api.xxx.workers.dev" class="flex-1 min-w-[220px] px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-xs focus:outline-none focus:ring-2 focus:ring-psru-gold">
+          <button onclick="saveApi()" class="px-3 py-2 rounded-xl bg-psru-navy text-white text-xs font-semibold">บันทึก URL</button>
+          <span id="apiState" class="text-xs"></span>
+        </div>
       </div>
 
       <!-- activities -->
@@ -254,6 +261,19 @@ const CUSTOM_KEY = 'ep-custom-weeks';
 function loadCustom(){ try{ return JSON.parse(localStorage.getItem(CUSTOM_KEY)||'[]'); }catch(e){ return []; } }
 function saveCustom(arr){ localStorage.setItem(CUSTOM_KEY, JSON.stringify(arr)); }
 let CUSTOM = loadCustom();
+
+// online backend (Cloudflare Worker) — ถ้าตั้งค่าไว้จะใช้ส่งคำตอบเข้าระบบอัตโนมัติ
+let API_BASE = (localStorage.getItem('ep-api')||'').replace(/\/+$/,'');
+function setApiBase(v){ API_BASE=(v||'').trim().replace(/\/+$/,''); localStorage.setItem('ep-api',API_BASE); }
+async function apiPublishSurvey(w){
+  if(!API_BASE) return false;
+  const body={ label:w.label, deadline:w.deadline||null,
+    activities:w.activities.map(a=>({title:a.title,when:a.when,where:a.where})) };
+  const r=await fetch(`${API_BASE}/api/surveys/${encodeURIComponent(w.sid)}`,{method:'PUT',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok) throw new Error('publish failed '+r.status);
+  return true;
+}
 
 // stable executive roster (10 ท่าน) captured from the original survey — used to auto-fill new forms
 const DEFAULT_ROSTER = (function(){
@@ -695,36 +715,76 @@ function builderDelete(i){
 function b64e(obj){ return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 function b64d(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); return JSON.parse(decodeURIComponent(escape(atob(s)))); }
 function surveyPayload(w){ return {sid:w.sid||('s'+Math.random().toString(36).slice(2)), l:w.label, d:w.deadline||null,
-  a:w.activities.map(x=>({t:x.title,w:x.when,p:x.where}))}; }
+  api:API_BASE||undefined, a:w.activities.map(x=>({t:x.title,w:x.when,p:x.where}))}; }
 function respondLink(w){ const base=location.href.split('#')[0]; return base+'#r='+b64e(surveyPayload(w)); }
-function openShareLink(i){
+async function openShareLink(i){
   const w=CUSTOM[i]; if(!w.sid){ w.sid='s'+Date.now().toString(36); saveCustom(CUSTOM); }
+  let online=false;
+  if(API_BASE){
+    try{ await apiPublishSurvey(w); online=true; }
+    catch(e){ toast('เผยแพร่ขึ้นระบบไม่สำเร็จ — จะใช้โหมดรหัสคำตอบแทน',false); }
+  }
   const link=respondLink(w);
   const closed=w.deadline&&Date.now()>w.deadline;
+  const onlineNote = online
+    ? '<div class="p-2 rounded-lg bg-emerald-50 text-emerald-700 text-xs"><i class="fa-solid fa-cloud-arrow-up mr-1"></i>โหมดออนไลน์: ผู้บริหารกด “ส่งคำตอบ” แล้วเข้าระบบทันที ไม่ต้องส่งรหัสกลับ</div>'
+    : '<div class="p-2 rounded-lg bg-amber-50 text-amber-700 text-xs"><i class="fa-solid fa-circle-info mr-1"></i>โหมดออฟไลน์: ผู้ตอบจะได้รหัสคำตอบส่งกลับให้ผู้ดูแลนำเข้า (ตั้ง Backend URL เพื่อเปิดโหมดออนไลน์)</div>';
   openModal(modalHead('ลิงก์ให้ผู้บริหารเข้ามาตอบ',w.label)+`
     <div class="p-5 space-y-3">
       <p class="text-sm text-psru-textLight">ส่งลิงก์นี้ให้ผู้บริหารผ่าน LINE/อีเมล ผู้รับเปิดแล้วเลือกชื่อตนเองและติ๊ก เข้าร่วม/ไม่เข้าร่วม ${w.deadline?'ระบบจะ<b>ปิดรับอัตโนมัติ</b>เมื่อถึง '+dlText(w.deadline):'(ยังไม่ได้ตั้งกำหนดปิด)'}</p>
+      ${onlineNote}
       ${closed?'<div class="p-2 rounded-lg bg-rose-50 text-rose-600 text-xs">หมายเหตุ: เลยกำหนดปิดรับแล้ว ผู้ตอบจะเห็นหน้าปิดรับ</div>':''}
       <textarea readonly id="shareUrl" class="w-full h-24 p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-xs break-all">${link}</textarea>
       <div class="flex flex-wrap gap-2">
         <button onclick="copyText(document.getElementById('shareUrl').value)" class="px-4 py-2 rounded-xl gradient-navy text-white text-sm font-semibold"><i class="fa-solid fa-copy mr-1.5"></i>คัดลอกลิงก์</button>
         <a href="https://line.me/R/share?text=${encodeURIComponent('แบบสำรวจการเข้าร่วมกิจกรรม: '+w.label+'\n'+link)}" target="_blank" class="px-4 py-2 rounded-xl bg-[#06C755] text-white text-sm font-semibold"><i class="fa-brands fa-line mr-1.5"></i>แชร์ผ่าน LINE</a>
-        <a href="${respondLink(w)}" target="_blank" class="px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm font-semibold text-psru-textDark dark:text-slate-200"><i class="fa-solid fa-up-right-from-square mr-1.5"></i>เปิดดูหน้าตอบ</a>
+        <a href="${link}" target="_blank" class="px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm font-semibold text-psru-textDark dark:text-slate-200"><i class="fa-solid fa-up-right-from-square mr-1.5"></i>เปิดดูหน้าตอบ</a>
       </div>
-      <p class="text-xs text-psru-textLight">ผู้ตอบกด “ส่งคำตอบ” แล้วจะได้รหัสคำตอบกลับมา ให้ส่งกลับหาผู้ดูแล แล้วนำเข้าด้วยปุ่ม “นำเข้าคำตอบ”</p>
     </div>`);
+}
+function saveApi(){ setApiBase(document.getElementById('bApi').value); renderApiState(); toast(API_BASE?'บันทึก Backend URL แล้ว':'ล้างค่าแล้ว (กลับเป็นโหมดออฟไลน์)'); }
+function renderApiState(){
+  const inp=document.getElementById('bApi'); if(inp&&!inp.value) inp.value=API_BASE;
+  const el=document.getElementById('apiState'); if(!el) return;
+  el.innerHTML=API_BASE?'<span class="text-emerald-600"><i class="fa-solid fa-circle-check"></i> ออนไลน์</span>':'<span class="text-slate-400">ออฟไลน์</span>';
 }
 function copyText(t){ navigator.clipboard?.writeText(t).then(()=>toast('คัดลอกแล้ว')).catch(()=>toast('คัดลอกไม่สำเร็จ',false)); }
 
-/* ===== collect responses (paste answer codes) ===== */
+/* ===== collect responses ===== */
 function openCollect(i){
   const w=CUSTOM[i];
+  const onlineBlock = API_BASE ? `
+      <div class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 mb-1">
+        <p class="text-sm text-emerald-800 dark:text-emerald-300 mb-2"><i class="fa-solid fa-cloud mr-1"></i>โหมดออนไลน์: ดึงคำตอบที่ผู้บริหารส่งเข้าระบบมารวมผลอัตโนมัติ</p>
+        <button onclick="pullResponses(${i})" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold"><i class="fa-solid fa-cloud-arrow-down mr-1.5"></i>ดึงคำตอบจากระบบ</button>
+      </div>
+      <div class="text-center text-xs text-psru-textLight">— หรือนำเข้าด้วยรหัสคำตอบ —</div>` : '';
   openModal(modalHead('นำเข้าคำตอบจากผู้บริหาร',w.label)+`
     <div class="p-5 space-y-3">
+      ${onlineBlock}
       <p class="text-sm text-psru-textLight">วางรหัสคำตอบที่ได้รับ (วางได้หลายรหัส บรรทัดละ 1 รหัส) แล้วกดนำเข้า — ระบบจะอัปเดตสถานะการเข้าร่วมและรวมผลให้</p>
       <textarea id="collectBox" class="w-full h-32 p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-xs" placeholder="วางรหัสคำตอบที่นี่..."></textarea>
       <button onclick="importAnswers(${i})" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold"><i class="fa-solid fa-inbox mr-1.5"></i>นำเข้าคำตอบ</button>
     </div>`);
+}
+async function pullResponses(i){
+  const w=CUSTOM[i];
+  if(!API_BASE){ toast('ยังไม่ได้ตั้ง Backend URL',false); return; }
+  try{
+    const r=await fetch(`${API_BASE}/api/surveys/${encodeURIComponent(w.sid)}/responses`);
+    if(!r.ok) throw new Error(r.status);
+    const data=await r.json(); let n=0;
+    (data.responses||[]).forEach(resp=>{
+      w.activities.forEach((act,ai)=>{
+        const st=resp.answers[ai]; if(!st) return;
+        const pr=act.attendees.find(p=>p.no===resp.no);
+        if(pr) pr.status=st;
+      });
+      n++;
+    });
+    saveCustom(CUSTOM); rerenderAll(); closeModal();
+    toast(`ดึงคำตอบจากระบบแล้ว ${n} ท่าน`);
+  }catch(e){ toast('ดึงคำตอบไม่สำเร็จ: '+e.message,false); }
 }
 function importAnswers(i){
   const w=CUSTOM[i];
@@ -817,14 +877,37 @@ function renderRespond(){
 }
 function rspPick(no){ RSP.no=parseInt(no,10)||null; RSP.answers=RSP.survey.a.map(()=> 'pending'); renderRespond(); }
 function rspAns(ai,st){ RSP.answers[ai]=(RSP.answers[ai]===st?'pending':st); renderRespond(); }
-function rspSubmit(){
+async function rspSubmit(){
   if(!RSP.no){ toast('กรุณาเลือกชื่อ',false); return; }
   const p=DEFAULT_ROSTER.find(x=>x.no===RSP.no);
-  const code=b64e({sid:RSP.survey.sid, no:RSP.no, ans:RSP.answers.map(x=>x||'pending')});
+  const ans=RSP.answers.map(x=>x||'pending');
   const el=document.getElementById('respondScreen');
-  el.innerHTML=`<div class="gradient-navy text-white p-6"><div class="max-w-2xl mx-auto">
+  const headDone=`<div class="gradient-navy text-white p-6"><div class="max-w-2xl mx-auto">
       <h1 class="text-xl font-extrabold"><i class="fa-solid fa-circle-check text-psru-gold mr-2"></i>ส่งคำตอบเรียบร้อย</h1>
-      <p class="text-blue-100 text-sm mt-1">${escapeHtml(shortName(p.name))} · ${escapeHtml(RSP.survey.l)}</p></div></div>
+      <p class="text-blue-100 text-sm mt-1">${escapeHtml(shortName(p.name))} · ${escapeHtml(RSP.survey.l)}</p></div></div>`;
+  // ===== online mode: ส่งเข้าระบบทันที ไม่ต้องมีรหัส =====
+  if(RSP.survey.api){
+    el.innerHTML=headDone+`<div class="max-w-2xl mx-auto p-6"><div class="card rounded-2xl p-8 text-center text-psru-textLight"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i><div>กำลังส่งคำตอบเข้าระบบ...</div></div></div>`;
+    try{
+      const r=await fetch(`${RSP.survey.api.replace(/\/+$/,'')}/api/surveys/${encodeURIComponent(RSP.survey.sid)}/responses`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({no:RSP.no,name:p.name,answers:ans})});
+      if(r.status===403){ el.innerHTML=headDone+`<div class="max-w-2xl mx-auto p-6"><div class="card rounded-2xl p-8 text-center"><i class="fa-solid fa-lock text-3xl text-rose-400 mb-2"></i><div class="font-bold text-psru-navy dark:text-white">ปิดรับคำตอบแล้ว</div></div></div>`; return; }
+      if(!r.ok) throw new Error(r.status);
+      el.innerHTML=headDone+`<div class="max-w-2xl mx-auto p-6 space-y-3">
+        <div class="card rounded-2xl p-8 text-center">
+          <i class="fa-solid fa-circle-check text-5xl text-emerald-500 mb-3"></i>
+          <h2 class="font-bold text-psru-navy dark:text-white text-lg">บันทึกคำตอบของท่านแล้ว</h2>
+          <p class="text-psru-textLight text-sm mt-1">ขอบคุณครับ — ระบบได้รับคำตอบเรียบร้อย ไม่ต้องดำเนินการอื่นเพิ่มเติม</p>
+        </div>
+        <button onclick="RSP.no=null;renderRespond();" class="block mx-auto text-sm text-psru-textLight underline">แก้ไขคำตอบ</button>
+      </div>`;
+      return;
+    }catch(e){ toast('ส่งออนไลน์ไม่สำเร็จ ใช้รหัสคำตอบแทน',false); /* ตกไปใช้โหมดรหัสด้านล่าง */ }
+  }
+  // ===== offline mode: แสดงรหัสคำตอบให้ส่งกลับ =====
+  const code=b64e({sid:RSP.survey.sid, no:RSP.no, ans});
+  el.innerHTML=headDone+`
     <div class="max-w-2xl mx-auto p-4 sm:p-6 space-y-3">
       <div class="card rounded-2xl p-5">
         <p class="text-sm text-psru-textDark dark:text-slate-200 mb-2 font-semibold">กรุณาส่ง “รหัสคำตอบ” นี้กลับให้ผู้ดูแล (คัดลอกแล้วส่งทาง LINE/อีเมล)</p>
@@ -954,7 +1037,7 @@ if(checkRespondRoute()){
 } else {
   // content first (never depends on external libs), charts last (Chart.js via CDN)
   renderKPI(); renderInsights(); renderMatrix(); renderWeekTabs(); renderWeek(); renderPeople();
-  renderBuilder(); renderBuilderSaved();
+  renderBuilder(); renderBuilderSaved(); renderApiState();
   if(document.documentElement.classList.contains('dark')) document.getElementById('darkIcon').className='fa-solid fa-sun';
   function bootCharts(tries){ if(typeof Chart!=='undefined'){ renderCharts(); } else if((tries||0)<40){ setTimeout(()=>bootCharts((tries||0)+1),150); } }
   bootCharts();

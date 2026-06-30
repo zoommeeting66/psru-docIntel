@@ -188,6 +188,66 @@ export default {
         }
       }
 
+      // ========================================================
+      // Surveys (แบบสำรวจการเข้าร่วมกิจกรรมของผู้บริหาร)
+      // ========================================================
+
+      // ---------- responses collection ----------
+      const rm = path.match(/^\/api\/surveys\/([^/]+)\/responses$/);
+      if (rm) {
+        const sid = decodeURIComponent(rm[1]);
+        if (method === 'POST') {
+          const b = await request.json();
+          if (b.no == null) return err('ต้องระบุ no (ลำดับผู้ตอบ)');
+          const s = await env.DB.prepare('SELECT deadline FROM surveys WHERE sid = ?').bind(sid).first();
+          if (s && s.deadline && Date.now() > Number(s.deadline)) return err('ปิดรับคำตอบแล้ว', 403);
+          await env.DB.prepare(
+            `INSERT INTO survey_responses (sid,no,name,answers,submitted_at)
+             VALUES (?,?,?,?,datetime('now'))
+             ON CONFLICT(sid,no) DO UPDATE SET name=excluded.name, answers=excluded.answers, submitted_at=datetime('now')`
+          ).bind(sid, b.no, b.name ?? null, JSON.stringify(b.answers ?? [])).run();
+          return json({ ok: true }, 201);
+        }
+        if (method === 'GET') {
+          const r = await env.DB.prepare(
+            'SELECT no,name,answers,submitted_at FROM survey_responses WHERE sid = ? ORDER BY no'
+          ).bind(sid).all();
+          const responses = r.results.map(x => {
+            let a = []; try { a = JSON.parse(x.answers || '[]'); } catch {}
+            return { no: x.no, name: x.name, answers: a, submitted_at: x.submitted_at };
+          });
+          return json({ sid, count: responses.length, responses });
+        }
+      }
+
+      // ---------- survey publish / fetch ----------
+      const sm = path.match(/^\/api\/surveys\/([^/]+)$/);
+      if (sm) {
+        const sid = decodeURIComponent(sm[1]);
+        if (method === 'PUT' || method === 'POST') {
+          const b = await request.json();
+          await env.DB.prepare(
+            `INSERT INTO surveys (sid,label,deadline,activities)
+             VALUES (?,?,?,?)
+             ON CONFLICT(sid) DO UPDATE SET label=excluded.label, deadline=excluded.deadline, activities=excluded.activities`
+          ).bind(sid, b.label ?? null, b.deadline ?? null, JSON.stringify(b.activities ?? [])).run();
+          return json({ ok: true, sid });
+        }
+        if (method === 'GET') {
+          const s = await env.DB.prepare('SELECT * FROM surveys WHERE sid = ?').bind(sid).first();
+          if (!s) return err('ไม่พบแบบสำรวจ', 404);
+          const r = await env.DB.prepare(
+            'SELECT no,name,answers,submitted_at FROM survey_responses WHERE sid = ? ORDER BY no'
+          ).bind(sid).all();
+          let activities = []; try { activities = JSON.parse(s.activities || '[]'); } catch {}
+          const responses = r.results.map(x => {
+            let a = []; try { a = JSON.parse(x.answers || '[]'); } catch {}
+            return { no: x.no, name: x.name, answers: a, submitted_at: x.submitted_at };
+          });
+          return json({ sid: s.sid, label: s.label, deadline: s.deadline, activities, responses });
+        }
+      }
+
       return err('ไม่พบ endpoint ที่ระบุ', 404);
     } catch (e) {
       return err('เกิดข้อผิดพลาด: ' + e.message, 500);
