@@ -8,6 +8,7 @@
     "deploy": "wrangler deploy",
     "db:schema": "wrangler d1 execute psru-docintel --remote --file=./schema.sql",
     "db:seed": "wrangler d1 execute psru-docintel --remote --file=./seed.sql",
+    "db:survey": "wrangler d1 execute psru-docintel --remote --file=./survey-schema.sql",
     "db:init": "npm run db:schema && npm run db:seed",
     "db:schema:local": "wrangler d1 execute psru-docintel --local --file=./schema.sql",
     "db:seed:local": "wrangler d1 execute psru-docintel --local --file=./seed.sql"

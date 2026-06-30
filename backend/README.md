@@ -52,6 +52,32 @@ npm run deploy              # = wrangler deploy
 
 ทุก endpoint เปิด CORS (`*`) เพื่อให้หน้าเว็บ static เรียกใช้ได้
 
+## API แบบสำรวจผู้บริหาร (Executive Pulse — โหมดออนไลน์)
+ใช้คู่กับ `executive-dashboard.html` เพื่อให้ผู้บริหาร “กดส่งคำตอบแล้วเข้าระบบทันที” (ไม่ต้องส่งรหัสกลับ)
+
+| Method | Path | คำอธิบาย |
+|--------|------|----------|
+| PUT/POST | `/api/surveys/:sid` | เผยแพร่/อัปเดตแบบสำรวจ (body: `label`,`deadline`,`activities[]`) |
+| GET | `/api/surveys/:sid` | ดึงแบบสำรวจ + คำตอบทั้งหมด |
+| POST | `/api/surveys/:sid/responses` | บันทึกคำตอบผู้ตอบ (body: `no`,`name`,`answers[]`) — ปฏิเสธ 403 ถ้าเลย `deadline` |
+| GET | `/api/surveys/:sid/responses` | รายการคำตอบ (ผู้ดูแลใช้ปุ่ม “ดึงคำตอบจากระบบ”) |
+
+**ติดตั้งตารางแบบสำรวจ (ครั้งเดียว ไม่กระทบตารางเอกสารเดิม):**
+```bash
+cd backend
+npm run db:survey        # สร้างตาราง surveys + survey_responses (CREATE TABLE IF NOT EXISTS)
+npm run deploy           # deploy Worker เวอร์ชันที่มี API แบบสำรวจ
+```
+
+**เปิดโหมดออนไลน์ในแดชบอร์ด:**
+1. เปิด `executive-dashboard.html` → เมนู **สร้างแบบสำรวจ**
+2. วาง **Backend URL** (เช่น `https://psru-docintel-api.<subdomain>.workers.dev`) ในช่อง “โหมดออนไลน์” แล้วกด **บันทึก URL**
+3. กด **ลิงก์ให้ตอบ** ของแบบสำรวจ → ระบบจะเผยแพร่ขึ้น Worker อัตโนมัติ แล้วส่งลิงก์ให้ผู้บริหาร
+4. ผู้บริหารเปิดลิงก์ เลือกชื่อ ติ๊ก แล้วกด **ส่งคำตอบ** → บันทึกเข้าระบบทันที
+5. ผู้ดูแลกด **นำเข้าคำตอบ → ดึงคำตอบจากระบบ** เพื่อรวมผลเข้าแดชบอร์ด
+
+> ถ้าไม่ตั้ง Backend URL ระบบจะทำงานแบบออฟไลน์ (ผู้ตอบได้รหัสคำตอบส่งกลับให้ผู้ดูแลนำเข้า) อัตโนมัติ
+
 ## ทดสอบเร็ว (หลัง deploy)
 ```bash
 curl https://psru-docintel-api.<subdomain>.workers.dev/api/health
