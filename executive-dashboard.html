@@ -82,6 +82,7 @@ tailwind.config = {
     <a data-nav="weekly" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="รายสัปดาห์"><i class="fa-solid fa-calendar-week w-5 text-center"></i>รายสัปดาห์</a>
     <a data-nav="people" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="รายบุคคลและอันดับ"><i class="fa-solid fa-ranking-star w-5 text-center"></i>รายบุคคล &amp; อันดับ</a>
     <div class="px-5 pt-5 pb-2 text-[11px] uppercase tracking-wider text-blue-200/50">เครื่องมือ</div>
+    <a data-nav="help" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="ช่วยเหลือและคู่มือการใช้งาน"><i class="fa-solid fa-circle-question w-5 text-center"></i>ช่วยเหลือ &amp; คู่มือ</a>
     <a onclick="window.print()" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="พิมพ์หรือบันทึกเป็น PDF" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.print();}"><i class="fa-solid fa-print w-5 text-center"></i>พิมพ์ / บันทึก PDF</a>
     <a onclick="exportCSV()" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="ส่งออกเป็นไฟล์ CSV" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();exportCSV();}"><i class="fa-solid fa-file-csv w-5 text-center"></i>ส่งออก CSV</a>
   </nav>
@@ -241,6 +242,95 @@ tailwind.config = {
       </div>
     </section>
 
+    <!-- ============ HELP ============ -->
+    <section id="view-help" class="view space-y-6">
+      <div id="helpStatus"></div>
+
+      <div class="card rounded-2xl p-5">
+        <h3 class="font-bold text-psru-navy dark:text-white mb-1"><i class="fa-solid fa-route mr-2 text-psru-gold"></i>คู่มือการใช้งาน (SOP) — ขั้นตอนสร้างแบบสำรวจ</h3>
+        <p class="text-xs text-psru-textLight mb-5">ทำตามลำดับ 1 → 6 เพื่อสร้างแบบสำรวจและติดตามผลแบบครบวงจร</p>
+        <div class="space-y-0">
+          <div class="flex gap-4 pb-4">
+            <div class="w-9 h-9 rounded-full gradient-navy text-white grid place-items-center font-bold shrink-0">1</div>
+            <div class="flex-1 pb-4 border-b border-slate-100 dark:border-slate-700">
+              <div class="font-semibold text-psru-textDark dark:text-slate-200">สร้างแบบสำรวจ</div>
+              <div class="text-sm text-psru-textLight mt-0.5">ไปที่เมนู <b>“สร้างแบบสำรวจ”</b> กรอกช่วงสัปดาห์/หัวข้อ ตั้งกำหนดปิดรับ (ถ้าต้องการ) แล้วกด <b>“สร้างฟอร์มอัตโนมัติ”</b> เพื่อเติมรายชื่อผู้บริหารทั้ง 10 ท่านให้พร้อมติ๊ก หรือกด “เพิ่มกิจกรรม” เพื่อกรอกเอง</div>
+            </div>
+          </div>
+          <div class="flex gap-4 pt-4 pb-4">
+            <div class="w-9 h-9 rounded-full gradient-navy text-white grid place-items-center font-bold shrink-0">2</div>
+            <div class="flex-1 pb-4 border-b border-slate-100 dark:border-slate-700">
+              <div class="font-semibold text-psru-textDark dark:text-slate-200">บันทึกเข้าแดชบอร์ด</div>
+              <div class="text-sm text-psru-textLight mt-0.5">กดปุ่ม <b>“บันทึกเข้าแดชบอร์ด”</b> — แบบสำรวจจะถูกบันทึกและปรากฏในรายการ “แบบสำรวจที่บันทึกไว้” ด้านล่าง</div>
+            </div>
+          </div>
+          <div class="flex gap-4 pt-4 pb-4">
+            <div class="w-9 h-9 rounded-full gradient-navy text-white grid place-items-center font-bold shrink-0">3</div>
+            <div class="flex-1 pb-4 border-b border-slate-100 dark:border-slate-700">
+              <div class="font-semibold text-psru-textDark dark:text-slate-200">สร้างลิงก์และส่งให้ผู้บริหาร</div>
+              <div class="text-sm text-psru-textLight mt-0.5">กดปุ่ม <b>“ลิงก์ให้ตอบ”</b> ในรายการที่บันทึกไว้ แล้วกด “คัดลอกลิงก์” หรือ “ส่งเข้า LINE (เลือกกลุ่ม/แชท)” เพื่อส่งเข้ากลุ่มไลน์ผู้บริหาร</div>
+            </div>
+          </div>
+          <div class="flex gap-4 pt-4 pb-4">
+            <div class="w-9 h-9 rounded-full gradient-navy text-white grid place-items-center font-bold shrink-0">4</div>
+            <div class="flex-1 pb-4 border-b border-slate-100 dark:border-slate-700">
+              <div class="font-semibold text-psru-textDark dark:text-slate-200">ผู้บริหารตอบแบบสำรวจ</div>
+              <div class="text-sm text-psru-textLight mt-0.5">ผู้บริหารเปิดลิงก์บนมือถือหรือคอมพิวเตอร์ เลือกชื่อของตนเอง ติ๊ก เข้าร่วม/ไม่เข้าร่วม ทีละกิจกรรม แล้วกด <b>“ส่งคำตอบ”</b> — ระบบบันทึกทันที ไม่ต้องส่งอะไรกลับ</div>
+            </div>
+          </div>
+          <div class="flex gap-4 pt-4 pb-4">
+            <div class="w-9 h-9 rounded-full gradient-navy text-white grid place-items-center font-bold shrink-0">5</div>
+            <div class="flex-1 pb-4 border-b border-slate-100 dark:border-slate-700">
+              <div class="font-semibold text-psru-textDark dark:text-slate-200">ติดตามผล</div>
+              <div class="text-sm text-psru-textLight mt-0.5">กด <b>“ดูผลสด”</b> ในหน้าต่างลิงก์ให้ตอบ เพื่อดูผลทันทีแบบเรียลไทม์ หรือกลับมาที่แดชบอร์ด กด <b>“นำเข้าคำตอบ → ดึงคำตอบจากระบบ”</b> เพื่อรวมผลเข้ากราฟ/ตาราง/KPI ของแดชบอร์ดหลัก</div>
+            </div>
+          </div>
+          <div class="flex gap-4 pt-4">
+            <div class="w-9 h-9 rounded-full gradient-navy text-white grid place-items-center font-bold shrink-0">6</div>
+            <div class="flex-1">
+              <div class="font-semibold text-psru-textDark dark:text-slate-200">วิเคราะห์ภาพรวม</div>
+              <div class="text-sm text-psru-textLight mt-0.5">ดูสรุปผลได้ที่เมนู “ภาพรวมผู้บริหาร” (KPI/แนวโน้ม), “ตารางสถานะรวม” (ฮีตแมป), “รายสัปดาห์” (รายละเอียดรายกิจกรรม) และ “รายบุคคล & อันดับ” (จัดอันดับการเข้าร่วม)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card rounded-2xl p-5">
+        <h3 class="font-bold text-psru-navy dark:text-white mb-1"><i class="fa-solid fa-life-ring mr-2 text-psru-gold"></i>คำแนะนำการแก้ไขเบื้องต้น</h3>
+        <p class="text-xs text-psru-textLight mb-4">ปัญหาที่พบบ่อยและวิธีแก้ไขด้วยตนเอง</p>
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40">
+            <div class="font-semibold text-sm text-psru-textDark dark:text-slate-200"><i class="fa-solid fa-circle-exclamation text-amber-500 mr-1.5"></i>ขึ้นข้อความ “เผยแพร่ขึ้นระบบไม่สำเร็จ — จะใช้โหมดรหัสคำตอบแทน”</div>
+            <div class="text-sm text-psru-textLight mt-1">ระบบเชื่อมต่อ Backend ไม่สำเร็จชั่วคราว ให้ตรวจสอบอินเทอร์เน็ต แล้วกด “ลิงก์ให้ตอบ” ใหม่อีกครั้ง หรือดูสถานะระบบด้านบนของหน้านี้ว่าขึ้น “พร้อมใช้งาน” หรือไม่</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40">
+            <div class="font-semibold text-sm text-psru-textDark dark:text-slate-200"><i class="fa-solid fa-link text-psru-royal mr-1.5"></i>ลิงก์ให้ตอบยาวมากผิดปกติ</div>
+            <div class="text-sm text-psru-textLight mt-1">เกิดขึ้นเมื่อระบบอยู่ในโหมดออฟไลน์ (ไม่ได้เชื่อมต่อ Backend) ลิงก์จะฝังข้อมูลทั้งหมดไว้จึงยาวกว่าปกติ — ถ้าสถานะระบบด้านบนขึ้น “พร้อมใช้งาน” ลิงก์ใหม่จะสั้นลงอัตโนมัติ</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40">
+            <div class="font-semibold text-sm text-psru-textDark dark:text-slate-200"><i class="fa-solid fa-lock text-rose-500 mr-1.5"></i>ผู้ตอบเจอหน้า “ปิดรับคำตอบแล้ว”</div>
+            <div class="text-sm text-psru-textLight mt-1">เลยกำหนดปิดรับ (deadline) ที่ตั้งไว้แล้ว หากต้องการรับคำตอบต่อ ให้สร้างแบบสำรวจใหม่และตั้งกำหนดปิดใหม่</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40">
+            <div class="font-semibold text-sm text-psru-textDark dark:text-slate-200"><i class="fa-solid fa-chart-simple text-emerald-500 mr-1.5"></i>ผู้บริหารตอบแล้ว แต่ยอดในแดชบอร์ดไม่ขยับ</div>
+            <div class="text-sm text-psru-textLight mt-1">ผลตอบจะยังไม่เข้าแดชบอร์ดหลักอัตโนมัติ ต้องกด “นำเข้าคำตอบ → ดึงคำตอบจากระบบ” ในรายการแบบสำรวจนั้นก่อน หรือกด “ดูผลสด” เพื่อเช็คแบบเรียลไทม์ได้ทันที</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40">
+            <div class="font-semibold text-sm text-psru-textDark dark:text-slate-200"><i class="fa-solid fa-chart-pie text-psru-royal mr-1.5"></i>กราฟไม่แสดงผล / ไอคอนหายไป</div>
+            <div class="text-sm text-psru-textLight mt-1">เกิดจากอินเทอร์เน็ตช้าหรือขัดข้องชั่วคราว (กราฟและไอคอนโหลดจากอินเทอร์เน็ต) ข้อมูลหลัก ตาราง และปุ่มต่าง ๆ ยังใช้งานได้ตามปกติ ลองรีเฟรชหน้าอีกครั้ง</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40">
+            <div class="font-semibold text-sm text-psru-textDark dark:text-slate-200"><i class="fa-solid fa-file-import text-psru-royal mr-1.5"></i>นำเข้า Excel/CSV ไม่สำเร็จ</div>
+            <div class="text-sm text-psru-textLight mt-1">ตรวจสอบว่าไฟล์มีคอลัมน์ “กิจกรรม” และ “สถานะ” ตรงตามรูปแบบไฟล์ที่ส่งออกจากระบบ (ปุ่ม “ส่งออก CSV”) — แนะนำให้ลองส่งออกไฟล์ตัวอย่างจากระบบก่อน แล้วแก้ไขต่อจากไฟล์นั้น</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card rounded-2xl p-5 text-center text-sm text-psru-textLight">
+        <i class="fa-solid fa-headset mr-1.5"></i>หากแก้ไขเบื้องต้นแล้วยังไม่หาย ติดต่อผู้ดูแลระบบ: กองวิเทศสัมพันธ์ มหาวิทยาลัยราชภัฏพิบูลสงคราม
+      </div>
+    </section>
+
   </main>
   <footer class="no-print text-center text-xs text-psru-textLight py-5 px-6">
     ข้อมูลจากแบบสำรวจผู้บริหารเข้าร่วมกิจกรรมประจำสัปดาห์ · จัดทำโดยกองวิเทศสัมพันธ์ มหาวิทยาลัยราชภัฏพิบูลสงคราม
@@ -336,7 +426,8 @@ const TITLES = {
   matrix:['ตารางสถานะรวม','ผู้บริหารทุกคน เทียบกับทุกกิจกรรมในมุมมองเดียว'],
   weekly:['รายสัปดาห์','เลือกสัปดาห์เพื่อดูรายละเอียดกิจกรรมและผู้เข้าร่วม'],
   people:['รายบุคคล & อันดับ','สถิติการเข้าร่วมของผู้บริหารแต่ละท่าน'],
-  builder:['สร้างแบบสำรวจ','สร้างแบบสำรวจการเข้าร่วมกิจกรรมใหม่ พร้อมเติมรายชื่อผู้บริหารอัตโนมัติ']
+  builder:['สร้างแบบสำรวจ','สร้างแบบสำรวจการเข้าร่วมกิจกรรมใหม่ พร้อมเติมรายชื่อผู้บริหารอัตโนมัติ'],
+  help:['ช่วยเหลือ & คู่มือ','สถานะระบบ คำแนะนำเบื้องต้น และขั้นตอนการสร้างแบบสำรวจ']
 };
 function nav(v){
   document.querySelectorAll('.nav-item[data-nav]').forEach(n=>n.classList.toggle('active',n.dataset.nav===v));
@@ -765,13 +856,52 @@ async function openShareLink(i){
       </div>
     </div>`);
 }
-function saveApi(){ setApiBase(document.getElementById('bApi').value); renderApiState(); toast(API_BASE?'บันทึก Backend URL แล้ว':'ล้างค่าแล้ว (กลับเป็นโหมดออฟไลน์)'); }
+function saveApi(){ setApiBase(document.getElementById('bApi').value); renderApiState(); renderHelp(); toast(API_BASE?'บันทึก Backend URL แล้ว':'ล้างค่าแล้ว (กลับเป็นโหมดออฟไลน์)'); }
 function renderApiState(){
   const inp=document.getElementById('bApi'); if(inp&&!inp.value) inp.value=API_BASE;
   const el=document.getElementById('apiState'); if(!el) return;
   el.innerHTML=API_BASE?'<span class="text-emerald-600"><i class="fa-solid fa-circle-check"></i> ออนไลน์</span>':'<span class="text-slate-400">ออฟไลน์</span>';
 }
 function copyText(t){ navigator.clipboard?.writeText(t).then(()=>toast('คัดลอกแล้ว')).catch(()=>toast('คัดลอกไม่สำเร็จ',false)); }
+
+/* ============================ HELP / SYSTEM STATUS ============================ */
+function renderHelp(){
+  const el=document.getElementById('helpStatus'); if(!el) return;
+  el.innerHTML = API_BASE ? `
+    <div class="rounded-2xl p-5 sm:p-6 bg-emerald-50 dark:bg-emerald-500/10 border-2 border-emerald-200 dark:border-emerald-500/30 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div class="w-14 h-14 rounded-2xl bg-emerald-500 text-white grid place-items-center text-2xl shrink-0"><i class="fa-solid fa-circle-check"></i></div>
+      <div class="flex-1 min-w-0">
+        <div class="text-lg font-extrabold text-emerald-700 dark:text-emerald-300">ระบบพร้อมใช้งาน — โหมดออนไลน์</div>
+        <div class="text-sm text-emerald-700/80 dark:text-emerald-300/70 break-all">เชื่อมต่อ Backend: ${API_BASE}</div>
+        <div class="text-xs text-emerald-700/70 dark:text-emerald-300/60 mt-1">ผู้บริหารกด “ส่งคำตอบ” แล้วเข้าระบบทันที ไม่ต้องส่งรหัสกลับ</div>
+      </div>
+      <button onclick="checkBackendHealth()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold shrink-0"><i class="fa-solid fa-stethoscope mr-1.5"></i>ตรวจสอบทันที</button>
+    </div>
+    <div id="healthResult" class="mt-2 text-sm px-1"></div>
+  ` : `
+    <div class="rounded-2xl p-5 sm:p-6 bg-amber-50 dark:bg-amber-500/10 border-2 border-amber-200 dark:border-amber-500/30 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div class="w-14 h-14 rounded-2xl bg-amber-500 text-white grid place-items-center text-2xl shrink-0"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div class="flex-1 min-w-0">
+        <div class="text-lg font-extrabold text-amber-700 dark:text-amber-300">โหมดออฟไลน์ — ยังไม่ได้เชื่อมต่อระบบ</div>
+        <div class="text-sm text-amber-700/80 dark:text-amber-300/70">ผู้ตอบจะได้รหัสคำตอบส่งกลับให้ผู้ดูแลนำเข้าเอง (ใช้งานได้ปกติ แต่ไม่กระชับเท่าโหมดออนไลน์)</div>
+      </div>
+      <button onclick="nav('builder')" class="px-4 py-2 rounded-xl bg-amber-600 text-white text-sm font-semibold shrink-0"><i class="fa-solid fa-gear mr-1.5"></i>ไปตั้งค่า</button>
+    </div>`;
+}
+async function checkBackendHealth(){
+  const el=document.getElementById('healthResult'); if(!el) return;
+  el.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> กำลังตรวจสอบ...';
+  try{
+    const t0=performance.now();
+    const r=await fetch(`${API_BASE.replace(/\/+$/,'')}/api/health`);
+    const ms=Math.round(performance.now()-t0);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    el.innerHTML=`<span class="text-emerald-600"><i class="fa-solid fa-circle-check"></i> เชื่อมต่อสำเร็จ (${ms} ms) — ${escapeHtml(data.service||'')}</span>`;
+  }catch(e){
+    el.innerHTML=`<span class="text-rose-600"><i class="fa-solid fa-circle-xmark"></i> เชื่อมต่อไม่สำเร็จ: ${escapeHtml(e.message)}</span>`;
+  }
+}
 
 /* ===== collect responses ===== */
 function openCollect(i){
@@ -1129,7 +1259,7 @@ if(checkRespondRoute()){
 } else {
   // content first (never depends on external libs), charts last (Chart.js via CDN)
   renderKPI(); renderInsights(); renderMatrix(); renderWeekTabs(); renderWeek(); renderPeople();
-  renderBuilder(); renderBuilderSaved(); renderApiState();
+  renderBuilder(); renderBuilderSaved(); renderApiState(); renderHelp();
   if(document.documentElement.classList.contains('dark')) document.getElementById('darkIcon').className='fa-solid fa-sun';
   function bootCharts(tries){ if(typeof Chart!=='undefined'){ renderCharts(); } else if((tries||0)<40){ setTimeout(()=>bootCharts((tries||0)+1),150); } }
   bootCharts();
