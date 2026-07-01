@@ -39,6 +39,10 @@ tailwind.config = {
   .nav-item{ border-left:3px solid transparent; transition:all .2s; }
   .nav-item.active{ background:rgba(212,175,55,.16); color:#D4AF37; border-left-color:#D4AF37; }
   .nav-item:not(.active):hover{ background:rgba(255,255,255,.06); }
+  .nav-item:focus-visible{ outline:2px solid #D4AF37; outline-offset:-2px; }
+  .nav-primary{ border-left:none; background:rgba(212,175,55,.10); border:1px solid rgba(212,175,55,.35); }
+  .nav-primary:hover{ background:rgba(212,175,55,.18); }
+  .nav-primary.active{ border-left:none; background:rgba(212,175,55,.22); }
   .card{ background:#fff; border:1px solid #eef2f7; }
   .dark .card{ background:#1e293b; border-color:#334155; }
   .dark body, .dark{ }
@@ -66,15 +70,20 @@ tailwind.config = {
       <div class="text-psru-gold text-[11px]">ติดตามการเข้าร่วมกิจกรรม</div>
     </div>
   </div>
-  <nav class="flex-1 py-4 space-y-1 overflow-y-auto text-sm">
-    <a data-nav="overview" class="nav-item active flex items-center gap-3 px-5 py-3 cursor-pointer"><i class="fa-solid fa-gauge-high w-5 text-center"></i>ภาพรวมผู้บริหาร</a>
-    <a data-nav="matrix" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer"><i class="fa-solid fa-table-cells w-5 text-center"></i>ตารางสถานะรวม</a>
-    <a data-nav="weekly" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer"><i class="fa-solid fa-calendar-week w-5 text-center"></i>รายสัปดาห์</a>
-    <a data-nav="people" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer"><i class="fa-solid fa-ranking-star w-5 text-center"></i>รายบุคคล &amp; อันดับ</a>
-    <a data-nav="builder" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer"><i class="fa-solid fa-clipboard-list w-5 text-center"></i>สร้างแบบสำรวจ</a>
+  <nav class="flex-1 py-4 space-y-1 overflow-y-auto text-sm" role="navigation" aria-label="เมนูหลัก">
+    <a data-nav="builder" class="nav-item nav-primary flex items-center gap-3 px-4 py-3.5 mx-3 mb-3 rounded-xl cursor-pointer" role="button" tabindex="0" aria-label="สร้างแบบสำรวจ — เริ่มต้นใช้งานที่นี่">
+      <i class="fa-solid fa-clipboard-list w-5 text-center text-lg text-psru-gold"></i>
+      <span class="flex-1 font-bold text-[15px]">สร้างแบบสำรวจ</span>
+      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-psru-gold text-psru-navy shrink-0">เริ่มที่นี่</span>
+    </a>
+    <div class="mx-5 mb-2 border-t border-white/10" aria-hidden="true"></div>
+    <a data-nav="overview" class="nav-item active flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="ภาพรวมผู้บริหาร"><i class="fa-solid fa-gauge-high w-5 text-center"></i>ภาพรวมผู้บริหาร</a>
+    <a data-nav="matrix" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="ตารางสถานะรวม"><i class="fa-solid fa-table-cells w-5 text-center"></i>ตารางสถานะรวม</a>
+    <a data-nav="weekly" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="รายสัปดาห์"><i class="fa-solid fa-calendar-week w-5 text-center"></i>รายสัปดาห์</a>
+    <a data-nav="people" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="รายบุคคลและอันดับ"><i class="fa-solid fa-ranking-star w-5 text-center"></i>รายบุคคล &amp; อันดับ</a>
     <div class="px-5 pt-5 pb-2 text-[11px] uppercase tracking-wider text-blue-200/50">เครื่องมือ</div>
-    <a onclick="window.print()" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer"><i class="fa-solid fa-print w-5 text-center"></i>พิมพ์ / บันทึก PDF</a>
-    <a onclick="exportCSV()" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer"><i class="fa-solid fa-file-csv w-5 text-center"></i>ส่งออก CSV</a>
+    <a onclick="window.print()" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="พิมพ์หรือบันทึกเป็น PDF" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.print();}"><i class="fa-solid fa-print w-5 text-center"></i>พิมพ์ / บันทึก PDF</a>
+    <a onclick="exportCSV()" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="ส่งออกเป็นไฟล์ CSV" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();exportCSV();}"><i class="fa-solid fa-file-csv w-5 text-center"></i>ส่งออก CSV</a>
   </nav>
   <div class="px-5 py-4 border-t border-white/10 text-[11px] text-blue-200/60">
     © 2569 มหาวิทยาลัยราชภัฏพิบูลสงคราม<br>กองวิเทศสัมพันธ์
@@ -338,7 +347,10 @@ function nav(v){
   if(window.innerWidth<1024) toggleSidebar(true);
   window.scrollTo({top:0});
 }
-document.querySelectorAll('.nav-item[data-nav]').forEach(n=>n.addEventListener('click',()=>nav(n.dataset.nav)));
+document.querySelectorAll('.nav-item[data-nav]').forEach(n=>{
+  n.addEventListener('click',()=>nav(n.dataset.nav));
+  n.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); nav(n.dataset.nav); } });
+});
 function toggleSidebar(forceClose){
   const sb=document.getElementById('sidebar'), bd=document.getElementById('backdrop');
   const open = !sb.classList.contains('-translate-x-full');
@@ -747,7 +759,7 @@ async function openShareLink(i){
       <textarea readonly id="shareUrl" class="w-full h-16 p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-xs break-all">${link}</textarea>
       <div class="flex flex-wrap gap-2">
         <button onclick="copyText(document.getElementById('shareUrl').value)" class="px-4 py-2 rounded-xl gradient-navy text-white text-sm font-semibold"><i class="fa-solid fa-copy mr-1.5"></i>คัดลอกลิงก์</button>
-        <a href="https://line.me/R/share?text=${encodeURIComponent('แบบสำรวจการเข้าร่วมกิจกรรม: '+w.label+'\n'+link)}" target="_blank" class="px-4 py-2 rounded-xl bg-[#06C755] text-white text-sm font-semibold"><i class="fa-brands fa-line mr-1.5"></i>แชร์ผ่าน LINE</a>
+        <a href="https://line.me/R/msg/text/?${encodeURIComponent('แบบสำรวจการเข้าร่วมกิจกรรม: '+w.label+'\n'+link)}" target="_blank" title="เปิด LINE แล้วเลือกส่งเข้าแชทหรือกลุ่มที่ต้องการ" class="px-4 py-2 rounded-xl bg-[#06C755] text-white text-sm font-semibold"><i class="fa-brands fa-line mr-1.5"></i>ส่งเข้า LINE (เลือกกลุ่ม/แชท)</a>
         <a href="${link}" target="_blank" class="px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm font-semibold text-psru-textDark dark:text-slate-200"><i class="fa-solid fa-up-right-from-square mr-1.5"></i>เปิดดูหน้าตอบ</a>
         ${online?`<a href="${resultsLink(w)}" target="_blank" class="px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm font-semibold text-psru-textDark dark:text-slate-200"><i class="fa-solid fa-chart-pie mr-1.5"></i>ดูผลสด</a>`:''}
       </div>
@@ -994,7 +1006,7 @@ async function rspSubmit(){
         <textarea readonly id="ansCode" class="w-full h-24 p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-xs break-all">${code}</textarea>
         <div class="flex flex-wrap gap-2 mt-2">
           <button onclick="copyText(document.getElementById('ansCode').value)" class="px-4 py-2 rounded-xl gradient-navy text-white text-sm font-semibold"><i class="fa-solid fa-copy mr-1.5"></i>คัดลอกรหัสคำตอบ</button>
-          <a href="https://line.me/R/share?text=${encodeURIComponent('คำตอบแบบสำรวจ ('+shortName(p.name)+'):\n'+code)}" target="_blank" class="px-4 py-2 rounded-xl bg-[#06C755] text-white text-sm font-semibold"><i class="fa-brands fa-line mr-1.5"></i>ส่งทาง LINE</a>
+          <a href="https://line.me/R/msg/text/?${encodeURIComponent('คำตอบแบบสำรวจ ('+shortName(p.name)+'):\n'+code)}" target="_blank" class="px-4 py-2 rounded-xl bg-[#06C755] text-white text-sm font-semibold"><i class="fa-brands fa-line mr-1.5"></i>ส่งทาง LINE</a>
         </div>
       </div>
       <button onclick="RSP.no=null;renderRespond();" class="text-sm text-psru-textLight underline">แก้ไขคำตอบ</button>
