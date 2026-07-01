@@ -718,7 +718,15 @@ function b64e(obj){ return btoa(unescape(encodeURIComponent(JSON.stringify(obj))
 function b64d(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); return JSON.parse(decodeURIComponent(escape(atob(s)))); }
 function surveyPayload(w){ return {sid:w.sid||('s'+Math.random().toString(36).slice(2)), l:w.label, d:w.deadline||null,
   api:API_BASE||undefined, a:w.activities.map(x=>({t:x.title,w:x.when,p:x.where}))}; }
-function respondLink(w){ const base=location.href.split('#')[0]; return base+'#r='+b64e(surveyPayload(w)); }
+// โหมดออนไลน์: ลิงก์สั้น ฝังแค่รหัสแบบสำรวจ (sid) — หน้าตอบจะดึงรายละเอียดจากเซิร์ฟเวอร์เอง
+// โหมดออฟไลน์: ต้องฝังข้อมูลทั้งหมดไว้ในลิงก์ (ไม่มีเซิร์ฟเวอร์ให้ดึง) ลิงก์จึงยาวกว่า
+function apiParam(){ return (API_BASE && API_BASE!==DEFAULT_API_BASE) ? '&api='+encodeURIComponent(API_BASE) : ''; }
+function respondLink(w, online){
+  const base=location.href.split('#')[0];
+  if(online) return base+'#s='+encodeURIComponent(w.sid)+apiParam();
+  return base+'#r='+b64e(surveyPayload(w));
+}
+function resultsLink(w){ const base=location.href.split('#')[0]; return base+'#v='+encodeURIComponent(w.sid)+apiParam(); }
 async function openShareLink(i){
   const w=CUSTOM[i]; if(!w.sid){ w.sid='s'+Date.now().toString(36); saveCustom(CUSTOM); }
   let online=false;
@@ -726,21 +734,22 @@ async function openShareLink(i){
     try{ await apiPublishSurvey(w); online=true; }
     catch(e){ toast('เผยแพร่ขึ้นระบบไม่สำเร็จ — จะใช้โหมดรหัสคำตอบแทน',false); }
   }
-  const link=respondLink(w);
+  const link=respondLink(w, online);
   const closed=w.deadline&&Date.now()>w.deadline;
   const onlineNote = online
-    ? '<div class="p-2 rounded-lg bg-emerald-50 text-emerald-700 text-xs"><i class="fa-solid fa-cloud-arrow-up mr-1"></i>โหมดออนไลน์: ผู้บริหารกด “ส่งคำตอบ” แล้วเข้าระบบทันที ไม่ต้องส่งรหัสกลับ</div>'
+    ? '<div class="p-2 rounded-lg bg-emerald-50 text-emerald-700 text-xs"><i class="fa-solid fa-cloud-arrow-up mr-1"></i>โหมดออนไลน์: ผู้บริหารกด “ส่งคำตอบ” แล้วเข้าระบบทันที ไม่ต้องส่งรหัสกลับ (ลิงก์นี้เป็นลิงก์สั้น)</div>'
     : '<div class="p-2 rounded-lg bg-amber-50 text-amber-700 text-xs"><i class="fa-solid fa-circle-info mr-1"></i>โหมดออฟไลน์: ผู้ตอบจะได้รหัสคำตอบส่งกลับให้ผู้ดูแลนำเข้า (ตั้ง Backend URL เพื่อเปิดโหมดออนไลน์)</div>';
   openModal(modalHead('ลิงก์ให้ผู้บริหารเข้ามาตอบ',w.label)+`
     <div class="p-5 space-y-3">
       <p class="text-sm text-psru-textLight">ส่งลิงก์นี้ให้ผู้บริหารผ่าน LINE/อีเมล ผู้รับเปิดแล้วเลือกชื่อตนเองและติ๊ก เข้าร่วม/ไม่เข้าร่วม ${w.deadline?'ระบบจะ<b>ปิดรับอัตโนมัติ</b>เมื่อถึง '+dlText(w.deadline):'(ยังไม่ได้ตั้งกำหนดปิด)'}</p>
       ${onlineNote}
       ${closed?'<div class="p-2 rounded-lg bg-rose-50 text-rose-600 text-xs">หมายเหตุ: เลยกำหนดปิดรับแล้ว ผู้ตอบจะเห็นหน้าปิดรับ</div>':''}
-      <textarea readonly id="shareUrl" class="w-full h-24 p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-xs break-all">${link}</textarea>
+      <textarea readonly id="shareUrl" class="w-full h-16 p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-xs break-all">${link}</textarea>
       <div class="flex flex-wrap gap-2">
         <button onclick="copyText(document.getElementById('shareUrl').value)" class="px-4 py-2 rounded-xl gradient-navy text-white text-sm font-semibold"><i class="fa-solid fa-copy mr-1.5"></i>คัดลอกลิงก์</button>
         <a href="https://line.me/R/share?text=${encodeURIComponent('แบบสำรวจการเข้าร่วมกิจกรรม: '+w.label+'\n'+link)}" target="_blank" class="px-4 py-2 rounded-xl bg-[#06C755] text-white text-sm font-semibold"><i class="fa-brands fa-line mr-1.5"></i>แชร์ผ่าน LINE</a>
         <a href="${link}" target="_blank" class="px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm font-semibold text-psru-textDark dark:text-slate-200"><i class="fa-solid fa-up-right-from-square mr-1.5"></i>เปิดดูหน้าตอบ</a>
+        ${online?`<a href="${resultsLink(w)}" target="_blank" class="px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm font-semibold text-psru-textDark dark:text-slate-200"><i class="fa-solid fa-chart-pie mr-1.5"></i>ดูผลสด</a>`:''}
       </div>
     </div>`);
 }
@@ -822,18 +831,87 @@ function openResults(i){
     <div class="p-4"><button onclick="closeModal()" class="w-full px-4 py-2 rounded-xl gradient-navy text-white text-sm font-semibold">ปิด</button></div>`);
 }
 
-/* ===== respondent screen (opened from #r= link) ===== */
+/* ===== respondent screen (opened from #r=/#s= link) + live results (#v=) ===== */
 let RSP=null; // {survey, answers:[status...], no}
+function hideChromeForOverlay(){ ['sidebar','main','topbar','backdrop'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; }); }
+function hashParam(h,key){ const m=h.match(new RegExp('[#&]'+key+'=([^&]+)')); return m?decodeURIComponent(m[1]):null; }
 function checkRespondRoute(){
   const h=location.hash||'';
-  const m=h.match(/[#&]r=([^&]+)/);
-  if(!m) return false;
-  try{ RSP={survey:b64d(m[1]), no:null, answers:[]}; }catch(e){ return false; }
-  // hide the whole dashboard chrome so nothing shows behind the answer screen
-  ['sidebar','main','topbar','backdrop'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
+  const vSid=hashParam(h,'v');
+  if(vSid){
+    hideChromeForOverlay();
+    document.getElementById('respondScreen').classList.remove('hidden');
+    renderResultsView(vSid, hashParam(h,'api')||DEFAULT_API_BASE);
+    return true;
+  }
+  const sSid=hashParam(h,'s');
+  if(sSid){
+    hideChromeForOverlay();
+    document.getElementById('respondScreen').classList.remove('hidden');
+    loadShortSurvey(sSid, hashParam(h,'api')||DEFAULT_API_BASE);
+    return true;
+  }
+  const rPayload=hashParam(h,'r');
+  if(!rPayload) return false;
+  try{ RSP={survey:b64d(rPayload), no:null, answers:[]}; }catch(e){ return false; }
+  hideChromeForOverlay();
   document.getElementById('respondScreen').classList.remove('hidden');
   renderRespond();
   return true;
+}
+async function loadShortSurvey(sid, api){
+  const el=document.getElementById('respondScreen');
+  el.innerHTML=`<div class="max-w-2xl mx-auto p-10 text-center text-psru-textLight"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i><div>กำลังโหลดแบบสำรวจ...</div></div>`;
+  try{
+    const r=await fetch(`${api.replace(/\/+$/,'')}/api/surveys/${encodeURIComponent(sid)}`);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    RSP={survey:{sid:data.sid, l:data.label, d:data.deadline, api,
+      a:(data.activities||[]).map(x=>({t:x.title,w:x.when,p:x.where}))}, no:null, answers:[]};
+    renderRespond();
+  }catch(e){
+    el.innerHTML=`<div class="max-w-2xl mx-auto p-10 text-center"><i class="fa-solid fa-triangle-exclamation text-3xl text-rose-400 mb-2"></i>
+      <div class="font-bold text-psru-navy dark:text-white">โหลดแบบสำรวจไม่สำเร็จ</div>
+      <div class="text-psru-textLight text-sm mt-1">ลิงก์อาจไม่ถูกต้องหรือระบบขัดข้อง กรุณาลองใหม่อีกครั้ง</div></div>`;
+  }
+}
+async function renderResultsView(sid, api){
+  const el=document.getElementById('respondScreen');
+  el.innerHTML=`<div class="max-w-2xl mx-auto p-10 text-center text-psru-textLight"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i><div>กำลังโหลดผลตอบ...</div></div>`;
+  try{
+    const r=await fetch(`${api.replace(/\/+$/,'')}/api/surveys/${encodeURIComponent(sid)}`);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    const acts=data.activities||[], responses=data.responses||[];
+    const rows=acts.map((a,ai)=>{
+      const statusByNo={}; responses.forEach(rp=>{ const st=rp.answers[ai]; if(st) statusByNo[rp.no]=st; });
+      let at=0,ab=0,pe=0;
+      const chips=DEFAULT_ROSTER.map(p=>{ const st=statusByNo[p.no]||'pending';
+        if(st==='attend')at++; else if(st==='absent')ab++; else pe++;
+        return `<span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full ${st==='attend'?'bg-emerald-50 text-emerald-700':st==='absent'?'bg-rose-50 text-rose-600':'bg-slate-100 text-slate-500'}"><i class="fa-solid ${st==='attend'?'fa-check':st==='absent'?'fa-xmark':'fa-minus'}"></i>${escapeHtml(shortName(p.name))}</span>`;
+      }).join('');
+      const rate=DEFAULT_ROSTER.length?Math.round(at/DEFAULT_ROSTER.length*100):0;
+      return `<div class="card rounded-2xl p-4 mb-3">
+        <div class="flex items-start justify-between gap-3 mb-1">
+          <div class="font-semibold text-psru-navy dark:text-white">${ai+1}. ${escapeHtml(a.title)}</div>
+          <span class="shrink-0 text-sm font-extrabold ${rate>=60?'text-emerald-600':rate>=35?'text-amber-600':'text-rose-600'}">${rate}%</span>
+        </div>
+        <div class="text-xs text-psru-textLight mb-2">เข้าร่วม ${at} · ไม่เข้าร่วม ${ab} · ไม่ระบุ ${pe}</div>
+        <div class="flex flex-wrap gap-1.5">${chips}</div>
+      </div>`;
+    }).join('');
+    const head=`<div class="gradient-navy text-white p-6"><div class="max-w-2xl mx-auto">
+        <div class="flex items-center gap-2 text-psru-gold text-xs mb-1"><i class="fa-solid fa-chart-pie"></i> ผลตอบแบบสำรวจ (สด) · PSRU</div>
+        <h1 class="text-xl font-extrabold">${escapeHtml(data.label||'')}</h1>
+        <div class="text-sm text-blue-100 mt-1">ตอบแล้ว ${responses.length} / ${DEFAULT_ROSTER.length} ท่าน</div>
+      </div></div>`;
+    el.innerHTML=head+`<div class="max-w-2xl mx-auto p-4 sm:p-6">${rows||'<div class="card rounded-2xl p-6 text-center text-psru-textLight text-sm">ไม่มีกิจกรรม</div>'}
+      <div class="text-center text-xs text-psru-textLight mt-4">กองวิเทศสัมพันธ์ มหาวิทยาลัยราชภัฏพิบูลสงคราม</div></div>`;
+  }catch(e){
+    el.innerHTML=`<div class="max-w-2xl mx-auto p-10 text-center"><i class="fa-solid fa-triangle-exclamation text-3xl text-rose-400 mb-2"></i>
+      <div class="font-bold text-psru-navy dark:text-white">โหลดผลตอบไม่สำเร็จ</div>
+      <div class="text-psru-textLight text-sm mt-1">ลิงก์อาจไม่ถูกต้องหรือระบบขัดข้อง กรุณาลองใหม่อีกครั้ง</div></div>`;
+  }
 }
 function renderRespond(){
   const sv=RSP.survey, closed=sv.d&&Date.now()>sv.d;
