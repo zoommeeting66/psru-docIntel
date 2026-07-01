@@ -262,8 +262,10 @@ function loadCustom(){ try{ return JSON.parse(localStorage.getItem(CUSTOM_KEY)||
 function saveCustom(arr){ localStorage.setItem(CUSTOM_KEY, JSON.stringify(arr)); }
 let CUSTOM = loadCustom();
 
-// online backend (Cloudflare Worker) — ถ้าตั้งค่าไว้จะใช้ส่งคำตอบเข้าระบบอัตโนมัติ
-let API_BASE = (localStorage.getItem('ep-api')||'').replace(/\/+$/,'');
+// online backend (Cloudflare Worker) — ฝัง URL เริ่มต้นไว้ในไฟล์ ใช้งานได้ทันทีจากทุกเครื่อง/เบราว์เซอร์
+// (เปลี่ยน Backend URL ในหน้า "สร้างแบบสำรวจ" ได้ถ้าต้องการชี้ไปที่อื่น หรือปิดโหมดออนไลน์โดยล้างช่องว่างแล้วบันทึก)
+const DEFAULT_API_BASE = 'https://psru-docintel-api.psru.workers.dev';
+let API_BASE = (localStorage.getItem('ep-api') ?? DEFAULT_API_BASE).replace(/\/+$/,'');
 function setApiBase(v){ API_BASE=(v||'').trim().replace(/\/+$/,''); localStorage.setItem('ep-api',API_BASE); }
 async function apiPublishSurvey(w){
   if(!API_BASE) return false;
