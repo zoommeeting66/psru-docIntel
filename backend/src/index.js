@@ -227,10 +227,10 @@ export default {
         if (method === 'PUT' || method === 'POST') {
           const b = await request.json();
           await env.DB.prepare(
-            `INSERT INTO surveys (sid,label,deadline,activities)
-             VALUES (?,?,?,?)
-             ON CONFLICT(sid) DO UPDATE SET label=excluded.label, deadline=excluded.deadline, activities=excluded.activities`
-          ).bind(sid, b.label ?? null, b.deadline ?? null, JSON.stringify(b.activities ?? [])).run();
+            `INSERT INTO surveys (sid,label,deadline,activities,roster)
+             VALUES (?,?,?,?,?)
+             ON CONFLICT(sid) DO UPDATE SET label=excluded.label, deadline=excluded.deadline, activities=excluded.activities, roster=excluded.roster`
+          ).bind(sid, b.label ?? null, b.deadline ?? null, JSON.stringify(b.activities ?? []), JSON.stringify(b.roster ?? [])).run();
           return json({ ok: true, sid });
         }
         if (method === 'GET') {
@@ -240,11 +240,12 @@ export default {
             'SELECT no,name,answers,submitted_at FROM survey_responses WHERE sid = ? ORDER BY no'
           ).bind(sid).all();
           let activities = []; try { activities = JSON.parse(s.activities || '[]'); } catch {}
+          let roster = []; try { roster = JSON.parse(s.roster || '[]'); } catch {}
           const responses = r.results.map(x => {
             let a = []; try { a = JSON.parse(x.answers || '[]'); } catch {}
             return { no: x.no, name: x.name, answers: a, submitted_at: x.submitted_at };
           });
-          return json({ sid: s.sid, label: s.label, deadline: s.deadline, activities, responses });
+          return json({ sid: s.sid, label: s.label, deadline: s.deadline, activities, roster, responses });
         }
       }
 
