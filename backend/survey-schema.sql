@@ -9,8 +9,11 @@ CREATE TABLE IF NOT EXISTS surveys (
   label      TEXT,
   deadline   INTEGER,          -- epoch ms (null = ไม่มีกำหนดปิด)
   activities TEXT,             -- JSON: [{title,when,where}]
+  roster     TEXT,             -- JSON: [{no,name,position}] รายชื่อผู้บริหารของแบบสำรวจนี้
   created_at TEXT DEFAULT (datetime('now'))
 );
+-- ฐานข้อมูลที่สร้างตาราง surveys ไว้ก่อนมีคอลัมน์ roster ให้รันแยกต่างหาก (ไม่ต้องรันไฟล์นี้ซ้ำ):
+--   ALTER TABLE surveys ADD COLUMN roster TEXT;
 
 CREATE TABLE IF NOT EXISTS survey_responses (
   sid          TEXT NOT NULL,
