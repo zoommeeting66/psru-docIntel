@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ประมาณการรายรับงบประมาณเงินรายได้ ปี 2570 | PSRU</title>
+<meta name="description" content="แดชบอร์ดวิเคราะห์ประมาณการรายรับงบประมาณเงินรายได้ ภาคปกติ ประจำปีงบประมาณ พ.ศ. 2570 มหาวิทยาลัยราชภัฏพิบูลสงคราม — รายคณะ รายสาขาวิชา แผน vs รับจริง และรายงานผู้บริหาร">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: { extend: {
+    colors: {
+      psru: { navy:'#002C6C', navyLight:'#0B3C82', navyDark:'#001A40', royal:'#1D4ED8',
+              gold:'#D4AF37', goldHover:'#B89328', bgLight:'#F4F7FA', textDark:'#1E293B', textLight:'#64748B' }
+    },
+    fontFamily:{ sans:['Sarabun','Inter','sans-serif'], thai:['Sarabun','sans-serif'] }
+  }}
+}
+</script>
+<style>
+  html{ scroll-behavior:smooth; }
+  body{ font-family:'Sarabun','Inter',sans-serif; }
+  ::-webkit-scrollbar{ width:9px; height:9px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+  ::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:5px; }
+  .dark ::-webkit-scrollbar-thumb{ background:#475569; }
+  .view{ display:none; }
+  .view.active{ display:block; animation:fadeIn .35s ease; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+  .gradient-navy{ background:linear-gradient(135deg,#002C6C 0%,#001A40 100%); }
+  .gradient-gold{ background:linear-gradient(135deg,#D4AF37 0%,#B89328 100%); }
+  .nav-item{ border-left:3px solid transparent; transition:all .2s; }
+  .nav-item.active{ background:rgba(212,175,55,.16); color:#D4AF37; border-left-color:#D4AF37; }
+  .nav-item:not(.active):hover{ background:rgba(255,255,255,.06); }
+  .nav-item:focus-visible{ outline:2px solid #D4AF37; outline-offset:-2px; }
+  .card{ background:#fff; border:1px solid #eef2f7; }
+  .dark .card{ background:#1e293b; border-color:#334155; }
+  .dark .bg-white{ background:#1e293b !important; }
+  .dark .bg-psru-bgLight{ background:#0f172a !important; }
+  .dark .text-psru-textDark{ color:#e2e8f0 !important; }
+  .dark .text-psru-textLight{ color:#94a3b8 !important; }
+  .dark .border-slate-100,.dark .border-slate-200{ border-color:#334155 !important; }
+  .dark .bg-slate-50{ background:#0f172a !important; }
+  .dark .bg-slate-100{ background:#293548 !important; }
+  .dark thead .bg-slate-50{ background:#1a2536 !important; }
+  table.rpt th, table.rpt td{ white-space:nowrap; }
+  .bar-track{ background:#e2e8f0; border-radius:99px; overflow:hidden; }
+  .dark .bar-track{ background:#334155; }
+  @media print{
+    #sidebar,#topbar,.no-print{ display:none !important; }
+    #main{ margin:0 !important; }
+    .view{ display:none !important; }
+    .view.print-all{ display:block !important; page-break-after:always; }
+    body{ background:#fff; }
+    .card{ border:1px solid #e2e8f0 !important; box-shadow:none !important; }
+  }
+</style>
+</head>
+<body class="bg-psru-bgLight text-psru-textDark antialiased">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 gradient-navy text-white flex flex-col -translate-x-full lg:translate-x-0 transition-transform duration-300">
+  <div class="px-5 py-5 flex items-center gap-3 border-b border-white/10">
+    <div class="w-11 h-11 rounded-xl gradient-gold flex items-center justify-center text-psru-navy font-extrabold text-lg shrink-0">฿</div>
+    <div class="leading-tight">
+      <div class="font-extrabold tracking-wide">Budget Pulse</div>
+      <div class="text-psru-gold text-[11px]">ประมาณการรายรับ ปี 2570</div>
+    </div>
+  </div>
+  <nav class="flex-1 py-4 space-y-1 overflow-y-auto text-sm" role="navigation" aria-label="เมนูหลัก">
+    <a data-nav="overview" class="nav-item active flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0"><i class="fa-solid fa-gauge-high w-5 text-center"></i>ภาพรวม</a>
+    <a data-nav="faculty" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0"><i class="fa-solid fa-building-columns w-5 text-center"></i>รายคณะ</a>
+    <a data-nav="program" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0"><i class="fa-solid fa-graduation-cap w-5 text-center"></i>รายสาขาวิชา</a>
+    <a data-nav="planactual" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0"><i class="fa-solid fa-scale-balanced w-5 text-center"></i>แผน vs รับจริง</a>
+    <a data-nav="report" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0"><i class="fa-solid fa-file-lines w-5 text-center"></i>รายงานผู้บริหาร</a>
+    <div class="px-5 pt-5 pb-2 text-[11px] uppercase tracking-wider text-blue-200/50">เครื่องมือ</div>
+    <a onclick="printAll()" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();printAll();}"><i class="fa-solid fa-print w-5 text-center"></i>พิมพ์ / บันทึก PDF</a>
+    <a onclick="exportCSV()" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();exportCSV();}"><i class="fa-solid fa-file-csv w-5 text-center"></i>ส่งออก CSV</a>
+  </nav>
+  <div class="px-5 py-4 border-t border-white/10 text-[11px] text-blue-200/60">
+    © 2569 มหาวิทยาลัยราชภัฏพิบูลสงคราม<br>กองนโยบายและแผน / งานงบประมาณ
+  </div>
+</aside>
+<div id="backdrop" class="fixed inset-0 bg-black/40 z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+<!-- ===================== MAIN ===================== -->
+<div id="main" class="lg:ml-64 min-h-screen flex flex-col">
+  <header id="topbar" class="sticky top-0 z-20 bg-white/90 dark:bg-slate-800/90 backdrop-blur border-b border-slate-100 px-4 sm:px-6 py-3 flex items-center gap-3">
+    <button onclick="toggleSidebar()" class="lg:hidden text-psru-navy dark:text-white text-xl"><i class="fa-solid fa-bars"></i></button>
+    <div class="flex-1 min-w-0">
+      <h1 id="pageTitle" class="font-extrabold text-psru-navy dark:text-white text-lg sm:text-xl truncate">ภาพรวมประมาณการรายรับ</h1>
+      <p id="pageSub" class="text-psru-textLight text-xs hidden sm:block">ประมาณการรายรับงบประมาณเงินรายได้ ภาคปกติ ปีงบประมาณ พ.ศ. 2570</p>
+    </div>
+    <button onclick="toggleDark()" title="สลับโหมดมืด" class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-600 grid place-items-center text-psru-textLight hover:text-psru-gold">
+      <i id="darkIcon" class="fa-solid fa-moon"></i>
+    </button>
+  </header>
+
+  <main class="flex-1 p-4 sm:p-6 max-w-[1400px] w-full mx-auto">
+
+    <!-- ============ OVERVIEW ============ -->
+    <section id="view-overview" class="view active space-y-6">
+      <div id="kpiGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="card rounded-2xl p-5 lg:col-span-2">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-psru-navy dark:text-white">ประมาณการรายรับรวมรายคณะ (รับจริง)</h3>
+            <span class="text-xs text-psru-textLight">ล้านบาท/ปี</span>
+          </div>
+          <div class="h-72"><canvas id="chFacRev"></canvas></div>
+        </div>
+        <div class="card rounded-2xl p-5">
+          <h3 class="font-bold text-psru-navy dark:text-white mb-3">โครงสร้างการจัดสรร (รับจริงทั้งสิ้น)</h3>
+          <div class="h-56"><canvas id="chAlloc"></canvas></div>
+          <div id="allocLegend" class="mt-3 space-y-1.5 text-sm"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="card rounded-2xl p-5">
+          <h3 class="font-bold text-psru-navy dark:text-white mb-3">เปรียบเทียบปีงบประมาณ 2569 → 2570</h3>
+          <div class="h-64"><canvas id="chYoY"></canvas></div>
+        </div>
+        <div class="card rounded-2xl p-5">
+          <h3 class="font-bold text-psru-navy dark:text-white mb-3">ไฮไลต์อัตโนมัติ</h3>
+          <div id="highlights" class="space-y-3 text-sm"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FACULTY ============ -->
+    <section id="view-faculty" class="view space-y-6">
+      <div class="card rounded-2xl p-5">
+        <h3 class="font-bold text-psru-navy dark:text-white mb-1">สรุปประมาณการรายรับรายคณะ</h3>
+        <p class="text-xs text-psru-textLight mb-4">แผนการรับ vs รับจริง (ณ 9 มิ.ย. 69) · รายรับ = ประมาณการทั้งปี · คงเหลือ = หลังหัก 5% กองทุน และ 20% ตามระเบียบวิธีงบประมาณ</p>
+        <div class="overflow-x-auto">
+          <table class="rpt w-full text-sm border-collapse">
+            <thead>
+              <tr class="text-left text-psru-textLight border-b-2 border-slate-200">
+                <th class="py-2.5 pr-3">คณะ</th>
+                <th class="py-2.5 px-3 text-right">นศ.แผน</th>
+                <th class="py-2.5 px-3 text-right">นศ.จริง</th>
+                <th class="py-2.5 px-3 text-right">อัตรารับ</th>
+                <th class="py-2.5 px-3 text-right">รายรับ (ล้าน)</th>
+                <th class="py-2.5 px-3 text-right">หัก 5%+20%</th>
+                <th class="py-2.5 px-3 text-right">คงเหลือ (ล้าน)</th>
+                <th class="py-2.5 pl-3 text-right">สัดส่วน</th>
+              </tr>
+            </thead>
+            <tbody id="facTable"></tbody>
+            <tfoot id="facFoot" class="font-bold border-t-2 border-slate-300"></tfoot>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PROGRAM ============ -->
+    <section id="view-program" class="view space-y-6">
+      <div class="card rounded-2xl p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+          <div class="flex-1">
+            <h3 class="font-bold text-psru-navy dark:text-white">ประมาณการรายรับรายสาขาวิชา</h3>
+            <p class="text-xs text-psru-textLight">รายรับ/คงเหลือ (รับจริง) จำแนกตามสาขาวิชา · <span id="progCount"></span> สาขา</p>
+          </div>
+          <div class="flex gap-2">
+            <select id="facFilter" onchange="renderProgram()" class="text-sm rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2"></select>
+            <input id="progSearch" oninput="renderProgram()" placeholder="ค้นหาสาขาวิชา..." class="text-sm rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 w-40">
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="rpt w-full text-sm border-collapse">
+            <thead>
+              <tr class="text-left text-psru-textLight border-b-2 border-slate-200">
+                <th class="py-2.5 pr-3">#</th>
+                <th class="py-2.5 px-3 cursor-pointer" onclick="sortProg('major')">สาขาวิชา</th>
+                <th class="py-2.5 px-3">คณะ</th>
+                <th class="py-2.5 px-3 text-right cursor-pointer" onclick="sortProg('studAct')">นศ.คงอยู่</th>
+                <th class="py-2.5 px-3 text-right cursor-pointer" onclick="sortProg('fee')">ค่าบำรุง</th>
+                <th class="py-2.5 px-3 text-right cursor-pointer" onclick="sortProg('revAct')">รายรับ (บาท)</th>
+                <th class="py-2.5 pl-3 text-right cursor-pointer" onclick="sortProg('netAct')">คงเหลือ (บาท)</th>
+              </tr>
+            </thead>
+            <tbody id="progTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PLAN vs ACTUAL ============ -->
+    <section id="view-planactual" class="view space-y-6">
+      <div id="paKpi" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></div>
+      <div class="card rounded-2xl p-5">
+        <h3 class="font-bold text-psru-navy dark:text-white mb-1">อัตราการรับจริงเทียบแผน (นักศึกษาชั้นปีที่ 1)</h3>
+        <p class="text-xs text-psru-textLight mb-4">แสดงเฉพาะชั้นปีที่ 1 ซึ่งเป็นส่วนที่รับเข้าใหม่ตามแผน · ชั้นปีที่ 2-4 เป็นนักศึกษาคงอยู่</p>
+        <div class="h-80"><canvas id="chFill"></canvas></div>
+      </div>
+      <div class="card rounded-2xl p-5">
+        <h3 class="font-bold text-psru-navy dark:text-white mb-3">ส่วนต่างรายรับ แผน vs รับจริง (รายคณะ)</h3>
+        <div class="overflow-x-auto">
+          <table class="rpt w-full text-sm border-collapse">
+            <thead><tr class="text-left text-psru-textLight border-b-2 border-slate-200">
+              <th class="py-2.5 pr-3">คณะ</th>
+              <th class="py-2.5 px-3 text-right">รายรับตามแผน</th>
+              <th class="py-2.5 px-3 text-right">รายรับรับจริง</th>
+              <th class="py-2.5 px-3 text-right">ส่วนต่าง</th>
+              <th class="py-2.5 pl-3 text-right">% บรรลุ</th>
+            </tr></thead>
+            <tbody id="paTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ REPORT ============ -->
+    <section id="view-report" class="view space-y-6">
+      <div class="card rounded-2xl p-6 lg:p-8" id="reportBody"></div>
+    </section>
+
+  </main>
+  <footer class="no-print text-center text-xs text-psru-textLight py-6 px-4">
+    ข้อมูลจากไฟล์ประมาณการรายรับงบประมาณเงินรายได้ · ภาคปกติ · จัดทำโดยกองนโยบายและแผน มหาวิทยาลัยราชภัฏพิบูลสงคราม
+  </footer>
+</div>
+
+<script id="data" type="application/json">{"faculties":[{"name":"คณะครุศาสตร์","plan":{"y1":660,"y24":1793,"total":2453,"rev":49240000,"fund5":2462000,"budget20":9355600,"net":37422400},"actual":{"y1":652,"y24":1793,"total":2445,"rev":49044000,"fund5":2452200,"budget20":9318360,"net":37273440},"short":"ครุศาสตร์"},{"name":"คณะเทคโนโลยีการเกษตรและอาหาร","plan":{"y1":250,"y24":451,"total":701,"rev":14504800,"fund5":739820,"budget20":2811316,"net":11245264},"actual":{"y1":175,"y24":451,"total":626,"rev":12556000,"fund5":642380,"budget20":2441044,"net":9764176},"short":"เทคโนโลยีการเกษตรและอาหาร"},{"name":"คณะเทคโนโลยีอุตสาหกรรม","plan":{"y1":850,"y24":1296,"total":2146,"rev":56312600,"fund5":2815630,"budget20":10699394,"net":42797576},"actual":{"y1":708,"y24":1296,"total":2004,"rev":51580200,"fund5":2579010,"budget20":9800238,"net":39200952},"short":"เทคโนโลยีอุตสาหกรรม"},{"name":"คณะมนุษยศาสตร์และสังคมศาสตร์","plan":{"y1":575,"y24":1181,"total":1756,"rev":31953000,"fund5":1597650,"budget20":6071070,"net":24284280},"actual":{"y1":538,"y24":1181,"total":1719,"rev":31146000,"fund5":1557300,"budget20":5917740,"net":23670960},"short":"มนุษยศาสตร์และสังคมศาสตร์"},{"name":"คณะวิทยาการจัดการ","plan":{"y1":1260,"y24":2557,"total":3817,"rev":71226400,"fund5":3561320,"budget20":13533016,"net":54132064},"actual":{"y1":1088,"y24":2557,"total":3645,"rev":67336400,"fund5":3366820,"budget20":12793916,"net":51175664},"short":"วิทยาการจัดการ"},{"name":"คณะวิทยาศาสตร์และเทคโนโลยี","plan":{"y1":630,"y24":1123,"total":1753,"rev":43421200,"fund5":2171060,"budget20":8250028,"net":33000112},"actual":{"y1":522,"y24":1123,"total":1645,"rev":41853600,"fund5":2092680,"budget20":7952184,"net":31808736},"short":"วิทยาศาสตร์และเทคโนโลยี"},{"name":"คณะสังคมศาสตร์และการพัฒนาท้องถิ่น","plan":{"y1":885,"y24":1942,"total":2827,"rev":52861000,"fund5":2643050,"budget20":10043590,"net":40174360},"actual":{"y1":1049,"y24":1942,"total":2991,"rev":56336000,"fund5":2816800,"budget20":10703840,"net":42815360},"short":"สังคมศาสตร์และการพัฒนาท้องถิ่น"},{"name":"คณะพยาบาลศาสตร์","plan":{"y1":80,"y24":248,"total":328,"rev":31104000,"fund5":1555200,"budget20":5909760,"net":23639040},"actual":{"y1":84,"y24":248,"total":332,"rev":31508000,"fund5":1575400,"budget20":5986520,"net":23946080},"short":"พยาบาลศาสตร์"}],"grand":{"plan":{"y1":5190,"y24":10591,"total":15781,"rev":350623000,"fund5":17545800,"budget20":66673800,"net":266695100},"actual":{"y1":4816,"y24":10591,"total":15407,"rev":341360200,"fund5":17082600,"budget20":64913900,"net":259655400},"prev2569":{"y1":4661,"y24":9414,"total":14075,"rev":299571400,"fund5":14978600,"budget20":56918600,"net":227674300},"diff":{"y1":155,"y24":1177,"total":1332,"rev":41788800,"fund5":2104000,"budget20":7995300,"net":31981100}},"majors":[{"faculty":"ครุศาสตร์","degree":"ครุศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาการประถมศึกษา","y1plan":90,"y1act":89,"y2":90,"y3":58,"y4":59,"fee":10000,"revPlan":5976000,"revAct":5953000,"netPlan":4541760,"netAct":4524280,"studAct":296,"studPlan":297},{"faculty":"ครุศาสตร์","degree":"ครุศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาการศึกษาปฐมวัย","y1plan":60,"y1act":60,"y2":59,"y3":58,"y4":58,"fee":10000,"revPlan":4648000,"revAct":4648000,"netPlan":3532480,"netAct":3532480,"studAct":235,"studPlan":235},{"faculty":"ครุศาสตร์","degree":"ครุศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาการศึกษาพิเศษ","y1plan":30,"y1act":30,"y2":27,"y3":29,"y4":31,"fee":11000,"revPlan":2370000,"revAct":2370000,"netPlan":1801200,"netAct":1801200,"studAct":117,"studPlan":117},{"faculty":"ครุศาสตร์","degree":"ครุศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาคณิตศาสตร์","y1plan":60,"y1act":60,"y2":56,"y3":57,"y4":56,"fee":10000,"revPlan":4534000,"revAct":4534000,"netPlan":3445840,"netAct":3445840,"studAct":229,"studPlan":229},{"faculty":"ครุศาสตร์","degree":"ครุศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาจิตวิทยาและการแนะแนว","y1plan":60,"y1act":60,"y2":58,"y3":50,"y4":53,"fee":11000,"revPlan":4514000,"revAct":4514000,"netPlan":3430640,"netAct":3430640,"studAct":221,"studPlan":221},{"faculty":"ครุศาสตร์","degree":"ครุศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาดนตรีศึกษาและนาฎศิลป์ศึกษา","y1plan":60,"y1act":58,"y2":55,"y3":55,"y4":47,"fee":11000,"revPlan":4436000,"revAct":4386000,"netPlan":3371360,"netAct":3333360,"studAct":215,"studPlan":217},{"faculty":"ครุศาสตร์","degree":"ครุศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาพลศึกษา","y1plan":60,"y1act":59,"y2":56,"y3":56,"y4":51,"fee":10000,"revPlan":4426000,"revAct":4403000,"netPlan":3363760,"netAct":3346280,"studAct":222,"studPlan":223},{"faculty":"ครุศาสตร์","degree":"ครุศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาภาษาไทย","y1plan":60,"y1act":60,"y2":57,"y3":58,"y4":58,"fee":10000,"revPlan":4608000,"revAct":4608000,"netPlan":3502080,"netAct":3502080,"studAct":233,"studPlan":233},{"faculty":"ครุศาสตร์","degree":"ครุศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาภาษาอังกฤษ","y1plan":60,"y1act":60,"y2":56,"y3":56,"y4":56,"fee":11000,"revPlan":4636000,"revAct":4636000,"netPlan":3523360,"netAct":3523360,"studAct":228,"studPlan":228},{"faculty":"ครุศาสตร์","degree":"ครุศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาวิทยาศาสตร์ทั่วไป","y1plan":60,"y1act":56,"y2":54,"y3":58,"y4":53,"fee":11000,"revPlan":4578000,"revAct":4478000,"netPlan":3479280,"netAct":3403280,"studAct":221,"studPlan":225},{"faculty":"ครุศาสตร์","degree":"ครุศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาสังคมศึกษา","y1plan":60,"y1act":60,"y2":55,"y3":58,"y4":55,"fee":10000,"revPlan":4514000,"revAct":4514000,"netPlan":3430640,"netAct":3430640,"studAct":228,"studPlan":228},{"faculty":"เทคโนโลยีการเกษตรและอาหาร","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาเกษตรศาสตร์","y1plan":0,"y1act":0,"y2":38,"y3":0,"y4":0,"fee":11700,"revPlan":790400,"revAct":790400,"netPlan":600704,"netAct":600704,"studAct":38,"studPlan":38},{"faculty":"เทคโนโลยีการเกษตรและอาหาร","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาเกษตรศาสตร์ วิชาเอกการจัดการทรัพยากรเกษตรและสิ่งแวดล้อม","y1plan":45,"y1act":33,"y2":0,"y3":29,"y4":30,"fee":11700,"revPlan":2214600,"revAct":1897800,"netPlan":1683096,"netAct":1442328,"studAct":92,"studPlan":104},{"faculty":"เทคโนโลยีการเกษตรและอาหาร","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาเกษตรศาสตร์ วิชาเอกพืชศาสตร์","y1plan":45,"y1act":12,"y2":0,"y3":14,"y4":14,"fee":11700,"revPlan":1675200,"revAct":804000,"netPlan":1273152,"netAct":611040,"studAct":40,"studPlan":73},{"faculty":"เทคโนโลยีการเกษตรและอาหาร","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาเทคโนโลยีระบบเกษตร","y1plan":0,"y1act":0,"y2":0,"y3":14,"y4":6,"fee":9700,"revPlan":348000,"revAct":348000,"netPlan":264480,"netAct":264480,"studAct":20,"studPlan":20},{"faculty":"เทคโนโลยีการเกษตรและอาหาร","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาพัฒนาผลิตภัณฑ์เพื่อสุขภาพและเครื่องสำอาง","y1plan":60,"y1act":53,"y2":37,"y3":25,"y4":22,"fee":10400,"revPlan":3015400,"revAct":2848800,"netPlan":2291704,"netAct":2165088,"studAct":137,"studPlan":144},{"faculty":"เทคโนโลยีการเกษตรและอาหาร","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาวิทยาศาสตร์และเทคโนโลยีการอาหาร","y1plan":40,"y1act":35,"y2":42,"y3":28,"y4":19,"fee":10400,"revPlan":2643400,"revAct":2524400,"netPlan":2008984,"netAct":1918544,"studAct":124,"studPlan":129},{"faculty":"เทคโนโลยีการเกษตรและอาหาร","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาสัตวศาสตร์และการเพาะเลี้ยงสัตว์น้ำ วิชาเอกสัตวศาสตร์","y1plan":30,"y1act":26,"y2":0,"y3":0,"y4":0,"fee":11700,"revPlan":792000,"revAct":686400,"netPlan":601920,"netAct":521664,"studAct":26,"studPlan":30},{"faculty":"เทคโนโลยีการเกษตรและอาหาร","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาสัตวศาสตร์และการเพาะเลี้ยงสัตว์น้ำ วิชาเอกการเพาะเลี้ยงสัตว์น้ำ","y1plan":30,"y1act":16,"y2":0,"y3":0,"y4":0,"fee":11700,"revPlan":792000,"revAct":422400,"netPlan":601920,"netAct":321024,"studAct":16,"studPlan":30},{"faculty":"เทคโนโลยีการเกษตรและอาหาร","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาสัตวศาสตร์และการเพาะเลี้ยงสัตว์น้ำ","y1plan":0,"y1act":0,"y2":48,"y3":40,"y4":31,"fee":10400,"revPlan":2233800,"revAct":2233800,"netPlan":1697688,"netAct":1697688,"studAct":119,"studPlan":119},{"faculty":"เทคโนโลยีการเกษตรและอาหาร","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี(เทียบโอน)","major":"สาขาวิชาวิทยาศาสตร์และเทคโนโลยีการอาหาร","y1plan":0,"y1act":0,"y2":0,"y3":2,"y4":0,"fee":9700,"revPlan":34800,"revAct":34800,"netPlan":26448,"netAct":26448,"studAct":2,"studPlan":2},{"faculty":"เทคโนโลยีการเกษตรและอาหาร","degree":"วิศวกรรมศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาวิศวกรรมอาหาร","y1plan":0,"y1act":0,"y2":0,"y3":6,"y4":6,"fee":12000,"revPlan":256800,"revAct":256800,"netPlan":195168,"netAct":195168,"studAct":12,"studPlan":12},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"เทคโนโลยีบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชานวัตกรรมเซรามิกส์สร้างสรรค์","y1plan":0,"y1act":0,"y2":0,"y3":5,"y4":0,"fee":9700,"revPlan":97000,"revAct":97000,"netPlan":73720,"netAct":73720,"studAct":5,"studPlan":5},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"วิศวกรรมศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาวิศวกรรมคอมพิวเตอร์","y1plan":70,"y1act":45,"y2":65,"y3":62,"y4":45,"fee":13000,"revPlan":5879800,"revAct":5154800,"netPlan":4468648,"netAct":3917648,"studAct":217,"studPlan":242},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"วิศวกรรมศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาวิศวกรรมการผลิต","y1plan":30,"y1act":16,"y2":0,"y3":0,"y4":0,"fee":19000,"revPlan":1230000,"revAct":656000,"netPlan":934800,"netAct":498560,"studAct":16,"studPlan":30},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"วิศวกรรมศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาวิศวกรรมเครื่องกล","y1plan":40,"y1act":35,"y2":33,"y3":23,"y4":24,"fee":16000,"revPlan":3461800,"revAct":3286800,"netPlan":2630968,"netAct":2497968,"studAct":115,"studPlan":120},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"วิศวกรรมศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาวิศวกรรมโลจิสติกส์","y1plan":135,"y1act":121,"y2":100,"y3":88,"y4":47,"fee":13000,"revPlan":9204000,"revAct":8798000,"netPlan":6995040,"netAct":6686480,"studAct":356,"studPlan":370},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"วิศวกรรมศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาวิศวกรรมไฟฟ้าสื่อสารและอิเล็กทรอนิกส์","y1plan":40,"y1act":79,"y2":37,"y3":29,"y4":10,"fee":12000,"revPlan":2802600,"revAct":3855600,"netPlan":2129976,"netAct":2930256,"studAct":155,"studPlan":116},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"วิศวกรรมศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาวิศวกรรมโยธา","y1plan":40,"y1act":20,"y2":33,"y3":25,"y4":5,"fee":19000,"revPlan":3338000,"revAct":2518000,"netPlan":2536880,"netAct":1913680,"studAct":83,"studPlan":103},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"วิศวกรรมศาสตรบัณฑิต","level":"ปริญญาตรี(เทียบโอน)","major":"สาขาวิชาวิศวกรรมไฟฟ้าสื่อสารและอิเล็กทรอนิกส์","y1plan":45,"y1act":72,"y2":42,"y3":32,"y4":0,"fee":12000,"revPlan":2907800,"revAct":3636800,"netPlan":2209928,"netAct":2763968,"studAct":146,"studPlan":119},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"วิศวกรรมศาสตรบัณฑิต","level":"ปริญญาตรี(เทียบโอน)","major":"สาขาวิชาวิศวกรรมเครื่องกล","y1plan":80,"y1act":57,"y2":70,"y3":63,"y4":47,"fee":19000,"revPlan":7874000,"revAct":6931000,"netPlan":5984240,"netAct":5267560,"studAct":237,"studPlan":260},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"วิศวกรรมศาสตรบัณฑิต","level":"ปริญญาตรี(เทียบโอน)","major":"สาขาวิชาวิศวกรรมการผลิต","y1plan":30,"y1act":11,"y2":0,"y3":0,"y4":0,"fee":19000,"revPlan":1230000,"revAct":451000,"netPlan":934800,"netAct":342760,"studAct":11,"studPlan":30},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"วิศวกรรมศาสตรบัณฑิต","level":"ปริญญาตรี(เทียบโอน)","major":"สาขาวิชาวิศวกรรมคอมพิวเตอร์","y1plan":30,"y1act":16,"y2":18,"y3":16,"y4":0,"fee":13000,"revPlan":1644400,"revAct":1238400,"netPlan":1249744,"netAct":941184,"studAct":50,"studPlan":64},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"วิศวกรรมศาสตรบัณฑิต","level":"ปริญญาตรี(เทียบโอน)","major":"สาขาวิชาวิศวกรรมโยธา","y1plan":40,"y1act":49,"y2":37,"y3":39,"y4":43,"fee":19000,"revPlan":4578800,"revAct":4947800,"netPlan":3479888,"netAct":3760328,"studAct":168,"studPlan":159},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"ศิลปกรรมศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาศิลปะและการออกแบบ วิชาเอกออกแบบผลิตภัณฑ์","y1plan":40,"y1act":32,"y2":0,"y3":0,"y4":0,"fee":9500,"revPlan":880000,"revAct":704000,"netPlan":668800,"netAct":535040,"studAct":32,"studPlan":40},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"ศิลปกรรมศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาศิลปะและการออกแบบ วิชาเอกเครื่องปั้นดินเผา","y1plan":40,"y1act":5,"y2":0,"y3":0,"y4":0,"fee":9500,"revPlan":880000,"revAct":110000,"netPlan":668800,"netAct":83600,"studAct":5,"studPlan":40},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"ศิลปกรรมศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาศิลปะและนวัตกรรมการออกแบบสร้างสรรค์","y1plan":0,"y1act":0,"y2":64,"y3":36,"y4":32,"fee":9500,"revPlan":2508000,"revAct":2508000,"netPlan":1906080,"netAct":1906080,"studAct":132,"studPlan":132},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"ศิลปกรรมศาสตรบัณฑิต","level":"ปริญญาตรี(เทียบโอน)","major":"สาขาวิชาศิลปะและนวัตกรรมการออกแบบสร้างสรรค์","y1plan":0,"y1act":0,"y2":13,"y3":12,"y4":0,"fee":9000,"revPlan":475000,"revAct":475000,"netPlan":361000,"netAct":361000,"studAct":25,"studPlan":25},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"ศิลปกรรมศาสตรบัณฑิต","level":"ปริญญาตรี(เทียบโอน)","major":"สาขาวิชาศิลปะและนวัตกรรมการออกแบบ","y1plan":60,"y1act":14,"y2":0,"y3":0,"y4":0,"fee":10500,"revPlan":1440000,"revAct":336000,"netPlan":1094400,"netAct":255360,"studAct":14,"studPlan":60},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"สถาปัตยกรรมศาสตรบัณฑิต","level":"ปริญญาตรี 5 ปี","major":"สาขาวิชาสถาปัตยกรรม","y1plan":30,"y1act":17,"y2":0,"y3":0,"y4":0,"fee":18000,"revPlan":1170000,"revAct":663000,"netPlan":889200,"netAct":503880,"studAct":17,"studPlan":30},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"อุตสาหกรรมศาสตรบัณฑิต","level":"ปริญญาตรี (ต่อเนื่อง)","major":"สาขาวิชาเทคโนโลยีอุตสาหกรรม วิชาเอกเทคโนโลยีวิศวกรรมการผลิต","y1plan":0,"y1act":0,"y2":0,"y3":1,"y4":0,"fee":10700,"revPlan":19400,"revAct":19400,"netPlan":14744,"netAct":14744,"studAct":1,"studPlan":1},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"อุตสาหกรรมศาสตรบัณฑิต","level":"ปริญญาตรี (ต่อเนื่อง)","major":"สาขาวิชาเทคโนโลยีอุตสาหกรรม วิชาเอกเทคโนโลยีวิศวกรรมไฟฟ้ากำลัง","y1plan":40,"y1act":44,"y2":38,"y3":16,"y4":0,"fee":11700,"revPlan":2156800,"revAct":2262400,"netPlan":1639168,"netAct":1719424,"studAct":98,"studPlan":94},{"faculty":"เทคโนโลยีอุตสาหกรรม","degree":"อุตสาหกรรมศาสตรบัณฑิต","level":"ปริญญาตรี (ต่อเนื่อง)","major":"สาขาวิชาเทคโนโลยีอุตสาหกรรม วิชาเอกเทคโนโลยีวิศวกรรมการจัดการและโลจิสติกส์","y1plan":60,"y1act":75,"y2":42,"y3":4,"y4":0,"fee":11700,"revPlan":2535200,"revAct":2931200,"netPlan":1926752,"netAct":2227712,"studAct":121,"studPlan":106},{"faculty":"มนุษยศาสตร์และสังคมศาสตร์","degree":"ศิลปศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาสารสนเทศศาสตร์","y1plan":40,"y1act":12,"y2":9,"y3":15,"y4":12,"fee":9000,"revPlan":1434000,"revAct":846000,"netPlan":1089840,"netAct":642960,"studAct":48,"studPlan":76},{"faculty":"มนุษยศาสตร์และสังคมศาสตร์","degree":"ศิลปศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาภาษาจีน","y1plan":90,"y1act":74,"y2":67,"y3":42,"y4":47,"fee":9000,"revPlan":4520000,"revAct":4184000,"netPlan":3435200,"netAct":3179840,"studAct":230,"studPlan":246},{"faculty":"มนุษยศาสตร์และสังคมศาสตร์","degree":"ศิลปศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาภาษาจีนธุรกิจ","y1plan":45,"y1act":50,"y2":34,"y3":24,"y4":27,"fee":9000,"revPlan":2373000,"revAct":2478000,"netPlan":1803480,"netAct":1883280,"studAct":135,"studPlan":130},{"faculty":"มนุษยศาสตร์และสังคมศาสตร์","degree":"ศิลปศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาภาษาญี่ปุ่น","y1plan":45,"y1act":45,"y2":35,"y3":45,"y4":46,"fee":9000,"revPlan":3031000,"revAct":3031000,"netPlan":2303560,"netAct":2303560,"studAct":171,"studPlan":171},{"faculty":"มนุษยศาสตร์และสังคมศาสตร์","degree":"ศิลปศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาภาษาไทย","y1plan":150,"y1act":157,"y2":119,"y3":116,"y4":89,"fee":9000,"revPlan":8572000,"revAct":8719000,"netPlan":6514720,"netAct":6626440,"studAct":481,"studPlan":474},{"faculty":"มนุษยศาสตร์และสังคมศาสตร์","degree":"ศิลปศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาภาษาอังกฤษ","y1plan":100,"y1act":107,"y2":76,"y3":66,"y4":67,"fee":9000,"revPlan":5596000,"revAct":5743000,"netPlan":4252960,"netAct":4364680,"studAct":316,"studPlan":309},{"faculty":"มนุษยศาสตร์และสังคมศาสตร์","degree":"ศิลปศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาภาษาอังกฤษธุรกิจ","y1plan":65,"y1act":63,"y2":62,"y3":53,"y4":50,"fee":9000,"revPlan":4129000,"revAct":4087000,"netPlan":3138040,"netAct":3106120,"studAct":228,"studPlan":230},{"faculty":"มนุษยศาสตร์และสังคมศาสตร์","degree":"ศิลปกรรมศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาดนตรีสากล","y1plan":0,"y1act":0,"y2":29,"y3":29,"y4":22,"fee":9500,"revPlan":1338000,"revAct":1338000,"netPlan":1016880,"netAct":1016880,"studAct":80,"studPlan":80},{"faculty":"มนุษยศาสตร์และสังคมศาสตร์","degree":"ศิลปกรรมศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาดนตรี","y1plan":40,"y1act":30,"y2":0,"y3":0,"y4":0,"fee":10500,"revPlan":960000,"revAct":720000,"netPlan":729600,"netAct":547200,"studAct":30,"studPlan":40},{"faculty":"วิทยาการจัดการ","degree":"ศิลปศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาการจัดการการท่องเที่ยวระหว่างประเทศ","y1plan":45,"y1act":42,"y2":38,"y3":40,"y4":38,"fee":9000,"revPlan":2877000,"revAct":2814000,"netPlan":2186520,"netAct":2138640,"studAct":158,"studPlan":161},{"faculty":"วิทยาการจัดการ","degree":"ศิลปศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาการท่องเที่ยวและบริการยุคดิจิทัล","y1plan":80,"y1act":48,"y2":58,"y3":35,"y4":16,"fee":9000,"revPlan":3540000,"revAct":2868000,"netPlan":2690400,"netAct":2179680,"studAct":157,"studPlan":189},{"faculty":"วิทยาการจัดการ","degree":"ศิลปศาสตรบัณฑิต","level":"ปริญญาตรี(เทียบโอน)","major":"สาขาวิชาการจัดการการท่องเที่ยวระหว่างประเทศ","y1plan":0,"y1act":0,"y2":11,"y3":8,"y4":0,"fee":9000,"revPlan":326000,"revAct":326000,"netPlan":247760,"netAct":247760,"studAct":19,"studPlan":19},{"faculty":"วิทยาการจัดการ","degree":"นิเทศศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชานิเทศศาสตร์","y1plan":135,"y1act":119,"y2":111,"y3":102,"y4":107,"fee":9000,"revPlan":8177000,"revAct":7841000,"netPlan":6214520,"netAct":5959160,"studAct":439,"studPlan":455},{"faculty":"วิทยาการจัดการ","degree":"บริหารธุรกิจบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาการจัดการ","y1plan":180,"y1act":179,"y2":173,"y3":142,"y4":130,"fee":9000,"revPlan":11354800,"revAct":11333800,"netPlan":8629648,"netAct":8613688,"studAct":624,"studPlan":625},{"faculty":"วิทยาการจัดการ","degree":"บริหารธุรกิจบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาการจัดการทรัพยากรมนุษย์และองค์การ","y1plan":50,"y1act":14,"y2":24,"y3":22,"y4":16,"fee":10000,"revPlan":2205200,"revAct":1377200,"netPlan":1675952,"netAct":1046672,"studAct":76,"studPlan":112},{"faculty":"วิทยาการจัดการ","degree":"บริหารธุรกิจบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาการจัดการเทคโนโลยีสารสนเทศทางธุรกิจ","y1plan":0,"y1act":0,"y2":49,"y3":38,"y4":40,"fee":10000,"revPlan":2161200,"revAct":2161200,"netPlan":1642512,"netAct":1642512,"studAct":127,"studPlan":127},{"faculty":"วิทยาการจัดการ","degree":"บริหารธุรกิจบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาธุรกิจการค้าสมัยใหม่","y1plan":90,"y1act":98,"y2":76,"y3":84,"y4":57,"fee":10000,"revPlan":5750400,"revAct":5934400,"netPlan":4370304,"netAct":4510144,"studAct":315,"studPlan":307},{"faculty":"วิทยาการจัดการ","degree":"บริหารธุรกิจบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาเทคโนโลยีธุรกิจดิจิทัล","y1plan":80,"y1act":62,"y2":0,"y3":0,"y4":0,"fee":10000,"revPlan":1840000,"revAct":1426000,"netPlan":1398400,"netAct":1083760,"studAct":62,"studPlan":80},{"faculty":"วิทยาการจัดการ","degree":"บริหารธุรกิจบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาการตลาดเชิงสร้างสรรค์และดิจิทัล","y1plan":120,"y1act":125,"y2":105,"y3":109,"y4":86,"fee":9000,"revPlan":7608000,"revAct":7713000,"netPlan":5782080,"netAct":5861880,"studAct":425,"studPlan":420},{"faculty":"วิทยาการจัดการ","degree":"บริหารธุรกิจบัณฑิต","level":"ปริญญาตรี(เทียบโอน)","major":"สาขาวิชาการจัดการ","y1plan":65,"y1act":56,"y2":68,"y3":46,"y4":0,"fee":9000,"revPlan":3343400,"revAct":3154400,"netPlan":2540984,"netAct":2397344,"studAct":170,"studPlan":179},{"faculty":"วิทยาการจัดการ","degree":"บริหารธุรกิจบัณฑิต","level":"ปริญญาตรี(เทียบโอน)","major":"สาขาวิชาการจัดการทรัพยากรมนุษย์และองค์การ","y1plan":40,"y1act":14,"y2":0,"y3":36,"y4":0,"fee":10000,"revPlan":1510400,"revAct":912400,"netPlan":1147904,"netAct":693424,"studAct":50,"studPlan":76},{"faculty":"วิทยาการจัดการ","degree":"บริหารธุรกิจบัณฑิต","level":"ปริญญาตรี(เทียบโอน)","major":"สาขาวิชาการจัดการเทคโนโลยีสารสนเทศทางธุรกิจ","y1plan":0,"y1act":0,"y2":36,"y3":39,"y4":0,"fee":10000,"revPlan":1287600,"revAct":1287600,"netPlan":978576,"netAct":978576,"studAct":75,"studPlan":75},{"faculty":"วิทยาการจัดการ","degree":"บริหารธุรกิจบัณฑิต","level":"ปริญญาตรี(เทียบโอน)","major":"สาขาวิชาเทคโนโลยีธุรกิจดิจิทัล","y1plan":45,"y1act":38,"y2":0,"y3":0,"y4":0,"fee":10000,"revPlan":1035000,"revAct":874000,"netPlan":786600,"netAct":664240,"studAct":38,"studPlan":45},{"faculty":"วิทยาการจัดการ","degree":"บริหารธุรกิจบัณฑิต","level":"ปริญญาตรี(เทียบโอน)","major":"สาขาวิชาการตลาดเชิงสร้างสรรค์และดิจิทัล","y1plan":45,"y1act":37,"y2":36,"y3":20,"y4":0,"fee":9000,"revPlan":1921000,"revAct":1753000,"netPlan":1459960,"netAct":1332280,"studAct":93,"studPlan":101},{"faculty":"วิทยาการจัดการ","degree":"เศรษฐศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาเศรษฐศาสตร์ธุรกิจและภาครัฐ","y1plan":45,"y1act":20,"y2":34,"y3":31,"y4":13,"fee":9000,"revPlan":2278600,"revAct":1753600,"netPlan":1731736,"netAct":1332736,"studAct":98,"studPlan":123},{"faculty":"วิทยาการจัดการ","degree":"บัญชีบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาการบัญชี","y1plan":90,"y1act":144,"y2":80,"y3":86,"y4":86,"fee":9500,"revPlan":6320800,"revAct":7508800,"netPlan":4803808,"netAct":5706688,"studAct":396,"studPlan":342},{"faculty":"วิทยาการจัดการ","degree":"บัญชีบัณฑิต","level":"ปริญญาตรี(เทียบโอน)","major":"สาขาวิชาการบัญชี","y1plan":150,"y1act":92,"y2":116,"y3":115,"y4":0,"fee":10500,"revPlan":7690000,"revAct":6298000,"netPlan":5844400,"netAct":4786480,"studAct":323,"studPlan":381},{"faculty":"สังคมศาสตร์และการพัฒนาท้องถิ่น","degree":"นิติศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชานิติศาสตร์","y1plan":90,"y1act":90,"y2":72,"y3":79,"y4":60,"fee":11000,"revPlan":5914000,"revAct":5914000,"netPlan":4494640,"netAct":4494640,"studAct":301,"studPlan":301},{"faculty":"สังคมศาสตร์และการพัฒนาท้องถิ่น","degree":"รัฐประศาสนศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชารัฐประศาสนศาสตร์ วิชาเอกการบริหารจัดการภาครัฐ","y1plan":165,"y1act":240,"y2":109,"y3":92,"y4":72,"fee":9000,"revPlan":8051000,"revAct":9626000,"netPlan":6118760,"netAct":7315760,"studAct":513,"studPlan":438},{"faculty":"สังคมศาสตร์และการพัฒนาท้องถิ่น","degree":"รัฐประศาสนศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชารัฐประศาสนศาสตร์ วิชาเอกการปกครองท้องถิ่น","y1plan":220,"y1act":312,"y2":161,"y3":137,"y4":103,"fee":9000,"revPlan":11358000,"revAct":13290000,"netPlan":8632080,"netAct":10100400,"studAct":713,"studPlan":621},{"faculty":"สังคมศาสตร์และการพัฒนาท้องถิ่น","degree":"รัฐประศาสนศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชารัฐประศาสนศาสตร์ วิชาเอกการบริหารงานยุติธรรมและสังคม","y1plan":0,"y1act":0,"y2":95,"y3":38,"y4":32,"fee":9000,"revPlan":2830000,"revAct":2830000,"netPlan":2150800,"netAct":2150800,"studAct":165,"studPlan":165},{"faculty":"สังคมศาสตร์และการพัฒนาท้องถิ่น","degree":"รัฐศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชารัฐศาสตร์","y1plan":200,"y1act":217,"y2":207,"y3":137,"y4":168,"fee":10000,"revPlan":13206000,"revAct":13597000,"netPlan":10036560,"netAct":10333720,"studAct":729,"studPlan":712},{"faculty":"สังคมศาสตร์และการพัฒนาท้องถิ่น","degree":"ศิลปศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาการพัฒนาชุมชน","y1plan":165,"y1act":146,"y2":134,"y3":84,"y4":78,"fee":9000,"revPlan":8955000,"revAct":8556000,"netPlan":6805800,"netAct":6502560,"studAct":442,"studPlan":461},{"faculty":"สังคมศาสตร์และการพัฒนาท้องถิ่น","degree":"สังคมสงเคราะห์ศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาสังคมสงเคราะห์ศาสตร์","y1plan":45,"y1act":44,"y2":41,"y3":17,"y4":26,"fee":10500,"revPlan":2547000,"revAct":2523000,"netPlan":1935720,"netAct":1917480,"studAct":128,"studPlan":129},{"faculty":"วิทยาศาสตร์และเทคโนโลยี","degree":"ครุศาสตรบัณฑิต และวิทยาศาสตรบัณฑิต","level":"ปริญญาตรีควบ 2 ปริญญา","major":"สาขาวิชาวิทยาศาสตร์ศึกษา ควบ สาขาวิชาชีววิทยา","y1plan":0,"y1act":0,"y2":0,"y3":10,"y4":8,"fee":0,"revPlan":514800,"revAct":514800,"netPlan":391248,"netAct":391248,"studAct":18,"studPlan":18},{"faculty":"วิทยาศาสตร์และเทคโนโลยี","degree":"ครุศาสตรบัณฑิต และวิทยาศาสตรบัณฑิต","level":"ปริญญาตรีควบ 2 ปริญญา","major":"สาขาวิชาวิทยาศาสตร์ศึกษา ควบ สาขาวิชาฟิสิกส์","y1plan":0,"y1act":0,"y2":0,"y3":5,"y4":0,"fee":0,"revPlan":143000,"revAct":143000,"netPlan":108680,"netAct":108680,"studAct":5,"studPlan":5},{"faculty":"วิทยาศาสตร์และเทคโนโลยี","degree":"ครุศาสตรบัณฑิต และวิทยาศาสตรบัณฑิต","level":"ปริญญาตรีควบ 2 ปริญญา","major":"สาขาวิชาวิทยาศาสตร์ศึกษา ควบ สาขาวิชาคณิตศาสตร์","y1plan":0,"y1act":0,"y2":0,"y3":13,"y4":14,"fee":0,"revPlan":772200,"revAct":772200,"netPlan":586872,"netAct":586872,"studAct":27,"studPlan":27},{"faculty":"วิทยาศาสตร์และเทคโนโลยี","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาคณิตศาสตร์","y1plan":30,"y1act":25,"y2":14,"y3":14,"y4":11,"fee":10400,"revPlan":1525200,"revAct":1406200,"netPlan":1159152,"netAct":1068712,"studAct":64,"studPlan":69},{"faculty":"วิทยาศาสตร์และเทคโนโลยี","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาฟิสิกส์","y1plan":0,"y1act":0,"y2":0,"y3":0,"y4":0,"fee":10400,"revPlan":0,"revAct":0,"netPlan":0,"netAct":0,"studAct":0,"studPlan":0},{"faculty":"วิทยาศาสตร์และเทคโนโลยี","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาเคมี","y1plan":30,"y1act":15,"y2":13,"y3":10,"y4":17,"fee":10400,"revPlan":1546000,"revAct":1189000,"netPlan":1174960,"netAct":903640,"studAct":55,"studPlan":70},{"faculty":"วิทยาศาสตร์และเทคโนโลยี","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาชีววิทยา","y1plan":30,"y1act":14,"y2":23,"y3":20,"y4":8,"fee":10400,"revPlan":1774800,"revAct":1394000,"netPlan":1348848,"netAct":1059440,"studAct":65,"studPlan":81},{"faculty":"วิทยาศาสตร์และเทคโนโลยี","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาจุลชีววิทยา","y1plan":30,"y1act":37,"y2":34,"y3":14,"y4":13,"fee":10400,"revPlan":1982800,"revAct":2149400,"netPlan":1506928,"netAct":1633544,"studAct":98,"studPlan":91},{"faculty":"วิทยาศาสตร์และเทคโนโลยี","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาวิทยาการคอมพิวเตอร์","y1plan":90,"y1act":33,"y2":75,"y3":73,"y4":55,"fee":10400,"revPlan":6364400,"revAct":5007800,"netPlan":4836944,"netAct":3805928,"studAct":236,"studPlan":293},{"faculty":"วิทยาศาสตร์และเทคโนโลยี","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาเทคโนโลยีสารสนเทศ","y1plan":60,"y1act":69,"y2":40,"y3":32,"y4":40,"fee":11700,"revPlan":3913600,"revAct":4151200,"netPlan":2974336,"netAct":3154912,"studAct":181,"studPlan":172},{"faculty":"วิทยาศาสตร์และเทคโนโลยี","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาวิทยาศาสตร์สิ่งแวดล้อม","y1plan":30,"y1act":20,"y2":11,"y3":6,"y4":12,"fee":11700,"revPlan":1395200,"revAct":1131200,"netPlan":1060352,"netAct":859712,"studAct":49,"studPlan":59},{"faculty":"วิทยาศาสตร์และเทคโนโลยี","degree":"วิทยาศาสตรบัณฑิต","level":"ปริญญาตรี(เทียบโอน)","major":"สาขาวิชาเทคโนโลยีสารสนเทศ","y1plan":60,"y1act":17,"y2":32,"y3":8,"y4":0,"fee":10400,"revPlan":2260000,"revAct":1236600,"netPlan":1717600,"netAct":939816,"studAct":57,"studPlan":100},{"faculty":"วิทยาศาสตร์และเทคโนโลยี","degree":"ศิลปศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาคหกรรมศาสตร์","y1plan":70,"y1act":37,"y2":52,"y3":31,"y4":23,"fee":9500,"revPlan":3554000,"revAct":2828000,"netPlan":2701040,"netAct":2149280,"studAct":143,"studPlan":176},{"faculty":"วิทยาศาสตร์และเทคโนโลยี","degree":"สาธารณสุขศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาสาธารณสุขศาสตร์","y1plan":200,"y1act":255,"y2":118,"y3":109,"y4":165,"fee":19000,"revPlan":17675200,"revAct":19930200,"netPlan":13433152,"netAct":15146952,"studAct":647,"studPlan":592},{"faculty":"พยาบาลศาสตร์","degree":"พยาบาลศาสตรบัณฑิต","level":"ปริญญาตรี 4 ปี","major":"สาขาวิชาการพยาบาล","y1plan":80,"y1act":84,"y2":88,"y3":64,"y4":96,"fee":49000,"revPlan":31104000,"revAct":31508000,"netPlan":23639040,"netAct":23946080,"studAct":332,"studPlan":328}],"meta":{"title":"ประมาณการรายรับงบประมาณเงินรายได้ ภาคปกติ","year":"2570","source":"รับจริง ณ 9 มิ.ย. 69"}}</script>
+<script>
+const DB = JSON.parse(document.getElementById('data').textContent);
+const F = DB.faculties, G = DB.grand, M = DB.majors;
+const PAL = ['#002C6C','#1D4ED8','#D4AF37','#0891B2','#7C3AED','#DB2777','#059669','#EA580C','#64748B'];
+
+// ---------- helpers ----------
+const baht = n => Number(n).toLocaleString('th-TH');
+const mil = n => (n/1e6).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+const pct = n => (n).toLocaleString('th-TH',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
+function isDark(){ return document.documentElement.classList.contains('dark'); }
+function gridColor(){ return isDark()?'rgba(148,163,184,.15)':'rgba(100,116,139,.12)'; }
+function tickColor(){ return isDark()?'#94a3b8':'#64748b'; }
+
+// ---------- navigation ----------
+const titles = {
+  overview:['ภาพรวมประมาณการรายรับ','ประมาณการรายรับงบประมาณเงินรายได้ ภาคปกติ ปีงบประมาณ พ.ศ. 2570'],
+  faculty:['สรุปรายคณะ','แผนการรับเทียบรับจริง รายรับ และคงเหลือหลังหักตามระเบียบ'],
+  program:['รายสาขาวิชา','ประมาณการรายรับจำแนกตามสาขาวิชา'],
+  planactual:['แผน vs รับจริง','วิเคราะห์อัตราการรับจริงเทียบแผนและส่วนต่างรายรับ'],
+  report:['รายงานผู้บริหาร','บทสรุปสำหรับผู้บริหารและข้อสังเกต']
+};
+let charts = {};
+function nav(key){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+key).classList.add('active');
+  document.querySelectorAll('[data-nav]').forEach(n=>n.classList.toggle('active', n.dataset.nav===key));
+  document.getElementById('pageTitle').textContent = titles[key][0];
+  document.getElementById('pageSub').textContent = titles[key][1];
+  if(window.innerWidth<1024) closeSidebar();
+  window.scrollTo(0,0);
+  setTimeout(()=>{ if(charts[key]) charts[key](); },50);
+}
+document.querySelectorAll('[data-nav]').forEach(n=>{
+  n.addEventListener('click',()=>nav(n.dataset.nav));
+  n.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();nav(n.dataset.nav);} });
+});
+function toggleSidebar(){ const s=document.getElementById('sidebar'),b=document.getElementById('backdrop');
+  s.classList.toggle('-translate-x-full'); b.classList.toggle('hidden'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.add('-translate-x-full');
+  document.getElementById('backdrop').classList.add('hidden'); }
+function toggleDark(){ document.documentElement.classList.toggle('dark');
+  document.getElementById('darkIcon').className = isDark()?'fa-solid fa-sun':'fa-solid fa-moon';
+  localStorage.setItem('budgetDark', isDark()?'1':'0'); redrawCharts(); }
+if(localStorage.getItem('budgetDark')==='1'){ document.documentElement.classList.add('dark');
+  document.getElementById('darkIcon').className='fa-solid fa-sun'; }
+
+// ---------- KPI ----------
+function kpiCard(icon,color,label,value,sub){
+  return `<div class="card rounded-2xl p-5">
+    <div class="flex items-center gap-3 mb-3">
+      <div class="w-10 h-10 rounded-xl grid place-items-center text-white" style="background:${color}"><i class="fa-solid ${icon}"></i></div>
+      <div class="text-psru-textLight text-xs font-medium leading-tight">${label}</div>
+    </div>
+    <div class="text-2xl font-extrabold text-psru-navy dark:text-white leading-none">${value}</div>
+    <div class="text-xs text-psru-textLight mt-1.5">${sub}</div>
+  </div>`;
+}
+function renderKPI(){
+  const a=G.actual, d=G.diff, p=G.prev2569;
+  const growth = (d.rev/p.rev*100);
+  document.getElementById('kpiGrid').innerHTML =
+    kpiCard('fa-users','#002C6C','นักศึกษาคงอยู่รวม',baht(a.total),`แผน ${baht(G.plan.total)} คน · อัตรารับ ${pct(a.total/G.plan.total*100)}`)+
+    kpiCard('fa-sack-dollar','#1D4ED8','ประมาณการรายรับทั้งปี',mil(a.rev)+' ล.',`${baht(a.rev)} บาท`)+
+    kpiCard('fa-hand-holding-dollar','#059669','คงเหลือหลังหักตามระเบียบ',mil(a.net)+' ล.',`หัก 5% กองทุน + 20% งบประมาณ = ${mil(a.fund5+a.budget20)} ล.`)+
+    kpiCard('fa-arrow-trend-up','#D4AF37','เติบโตจากปี 2569',pct(growth),`+${mil(d.rev)} ล. (${baht(d.total)} คน)`);
+}
+
+// ---------- OVERVIEW charts ----------
+charts.overview = function(){
+  const facs = F.slice().sort((x,y)=>y.actual.rev-x.actual.rev);
+  mkBar('chFacRev', facs.map(f=>f.short), [{
+    label:'รายรับ (ล้านบาท)', data:facs.map(f=>+(f.actual.rev/1e6).toFixed(2)),
+    backgroundColor:facs.map((_,i)=>PAL[i%PAL.length]), borderRadius:6
+  }], {horizontal:true, moneyMil:true});
+
+  const a=G.actual;
+  mkDoughnut('chAlloc',
+    ['คงเหลือใช้จริง','20% ตามระเบียบวิธีงบประมาณ','5% เข้ากองทุน'],
+    [a.net,a.budget20,a.fund5], ['#059669','#1D4ED8','#D4AF37']);
+  const parts=[['คงเหลือใช้จริง',a.net,'#059669'],['20% ตามระเบียบวิธีงบประมาณ',a.budget20,'#1D4ED8'],['5% เข้ากองทุน',a.fund5,'#D4AF37']];
+  document.getElementById('allocLegend').innerHTML = parts.map(([l,v,c])=>
+    `<div class="flex items-center justify-between">
+       <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm inline-block" style="background:${c}"></span>${l}</span>
+       <span class="font-semibold">${mil(v)} ล. <span class="text-psru-textLight font-normal">(${pct(v/a.rev*100)})</span></span>
+     </div>`).join('');
+
+  mkBar('chYoY', ['2569','2570 (รับจริง)'], [{
+    label:'รายรับ (ล้านบาท)', data:[+(G.prev2569.rev/1e6).toFixed(2),+(a.rev/1e6).toFixed(2)],
+    backgroundColor:['#94a3b8','#002C6C'], borderRadius:6
+  }], {moneyMil:true});
+
+  renderHighlights();
+};
+function renderHighlights(){
+  const facs=F.slice();
+  const topRev=facs.slice().sort((a,b)=>b.actual.rev-a.actual.rev)[0];
+  const topFill=facs.slice().sort((a,b)=>(b.actual.total/b.plan.total)-(a.actual.total/a.plan.total))[0];
+  const lowFill=facs.slice().sort((a,b)=>(a.actual.total/a.plan.total)-(b.actual.total/b.plan.total))[0];
+  const over=facs.filter(f=>f.actual.total>f.plan.total);
+  const topProg=M.slice().sort((a,b)=>b.revAct-a.revAct)[0];
+  const items=[
+    ['fa-trophy','#D4AF37',`คณะที่มีประมาณการรายรับสูงสุดคือ <b>${topRev.short}</b> ${mil(topRev.actual.rev)} ล้านบาท (${pct(topRev.actual.rev/G.actual.rev*100)} ของทั้งหมด)`],
+    ['fa-graduation-cap','#1D4ED8',`สาขาวิชาที่สร้างรายรับสูงสุดคือ <b>${topProg.major.replace('สาขาวิชา','')}</b> (${topRev===topProg?'':''}${mil(topProg.revAct)} ล้านบาท)`],
+    ['fa-circle-check','#059669',`คณะที่รับจริงเกินแผน: <b>${over.length?over.map(f=>f.short).join(', '):'—'}</b>`],
+    ['fa-arrow-up','#0891B2',`อัตรารับจริง/แผนสูงสุด: <b>${topFill.short}</b> ${pct(topFill.actual.total/topFill.plan.total*100)}`],
+    ['fa-triangle-exclamation','#EA580C',`ควรติดตาม — อัตรารับต่ำสุด: <b>${lowFill.short}</b> เพียง ${pct(lowFill.actual.total/lowFill.plan.total*100)} ของแผน`],
+    ['fa-chart-line','#7C3AED',`ภาพรวมเติบโต <b>${pct(G.diff.rev/G.prev2569.rev*100)}</b> จากปี 2569 คิดเป็น +${mil(G.diff.rev)} ล้านบาท`]
+  ];
+  document.getElementById('highlights').innerHTML = items.map(([i,c,t])=>
+    `<div class="flex gap-3 items-start">
+       <div class="w-8 h-8 rounded-lg grid place-items-center text-white shrink-0 mt-0.5" style="background:${c}"><i class="fa-solid ${i} text-sm"></i></div>
+       <p class="text-psru-textDark dark:text-slate-200 leading-relaxed">${t}</p>
+     </div>`).join('');
+}
+
+// ---------- FACULTY table ----------
+function renderFaculty(){
+  const facs=F.slice().sort((a,b)=>b.actual.rev-a.actual.rev);
+  const tot=G.actual;
+  document.getElementById('facTable').innerHTML = facs.map((f,i)=>{
+    const fill=f.actual.total/f.plan.total*100;
+    const share=f.actual.rev/tot.rev*100;
+    const fillCol=fill>=100?'#059669':fill>=90?'#D4AF37':'#EA580C';
+    return `<tr class="border-b border-slate-100 hover:bg-slate-50">
+      <td class="py-2.5 pr-3 font-medium text-psru-navy dark:text-white">${f.short}</td>
+      <td class="py-2.5 px-3 text-right">${baht(f.plan.total)}</td>
+      <td class="py-2.5 px-3 text-right font-semibold">${baht(f.actual.total)}</td>
+      <td class="py-2.5 px-3 text-right"><span style="color:${fillCol}" class="font-semibold">${pct(fill)}</span></td>
+      <td class="py-2.5 px-3 text-right">${mil(f.actual.rev)}</td>
+      <td class="py-2.5 px-3 text-right text-psru-textLight">${mil(f.actual.fund5+f.actual.budget20)}</td>
+      <td class="py-2.5 px-3 text-right font-semibold text-emerald-600 dark:text-emerald-400">${mil(f.actual.net)}</td>
+      <td class="py-2.5 pl-3">
+        <div class="flex items-center gap-2 justify-end">
+          <div class="bar-track w-16 h-2"><div class="h-full rounded-full" style="width:${share}%;background:${PAL[i%PAL.length]}"></div></div>
+          <span class="text-xs text-psru-textLight w-10 text-right">${pct(share)}</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('facFoot').innerHTML =
+    `<tr>
+      <td class="py-2.5 pr-3 text-psru-navy dark:text-white">รวมทั้งสิ้น</td>
+      <td class="py-2.5 px-3 text-right">${baht(G.plan.total)}</td>
+      <td class="py-2.5 px-3 text-right">${baht(tot.total)}</td>
+      <td class="py-2.5 px-3 text-right">${pct(tot.total/G.plan.total*100)}</td>
+      <td class="py-2.5 px-3 text-right">${mil(tot.rev)}</td>
+      <td class="py-2.5 px-3 text-right">${mil(tot.fund5+tot.budget20)}</td>
+      <td class="py-2.5 px-3 text-right text-emerald-600 dark:text-emerald-400">${mil(tot.net)}</td>
+      <td class="py-2.5 pl-3 text-right">100%</td>
+    </tr>`;
+}
+
+// ---------- PROGRAM table ----------
+let progSort={key:'revAct',dir:-1};
+function sortProg(k){ progSort.dir = (progSort.key===k? -progSort.dir : -1); progSort.key=k; renderProgram(); }
+function renderProgram(){
+  const fac=document.getElementById('facFilter').value;
+  const q=(document.getElementById('progSearch').value||'').trim().toLowerCase();
+  let rows=M.filter(m=>(fac==='all'||m.faculty===fac) && (!q || m.major.toLowerCase().includes(q)));
+  const k=progSort.key;
+  rows.sort((a,b)=> typeof a[k]==='string'? a[k].localeCompare(b[k],'th')*progSort.dir : (a[k]-b[k])*progSort.dir);
+  document.getElementById('progCount').textContent = rows.length;
+  document.getElementById('progTable').innerHTML = rows.map((m,i)=>`
+    <tr class="border-b border-slate-100 hover:bg-slate-50">
+      <td class="py-2 pr-3 text-psru-textLight">${i+1}</td>
+      <td class="py-2 px-3 font-medium text-psru-navy dark:text-white">${m.major.replace('สาขาวิชา','')}</td>
+      <td class="py-2 px-3 text-psru-textLight text-xs">${m.faculty}</td>
+      <td class="py-2 px-3 text-right">${baht(m.studAct)}</td>
+      <td class="py-2 px-3 text-right text-psru-textLight">${m.fee?baht(m.fee):'—'}</td>
+      <td class="py-2 px-3 text-right font-semibold">${baht(m.revAct)}</td>
+      <td class="py-2 pl-3 text-right text-emerald-600 dark:text-emerald-400">${baht(m.netAct)}</td>
+    </tr>`).join('');
+}
+function initFacFilter(){
+  const sel=document.getElementById('facFilter');
+  sel.innerHTML='<option value="all">ทุกคณะ</option>'+F.map(f=>`<option value="${f.short}">${f.short}</option>`).join('');
+}
+
+// ---------- PLAN vs ACTUAL ----------
+charts.planactual = function(){
+  const a=G.actual,p=G.plan;
+  document.getElementById('paKpi').innerHTML =
+    kpiCard('fa-bullseye','#002C6C','นศ.ปี 1 ตามแผน',baht(p.y1),'แผนการรับนักศึกษาใหม่')+
+    kpiCard('fa-user-check','#1D4ED8','นศ.ปี 1 รับจริง',baht(a.y1),`อัตรารับ ${pct(a.y1/p.y1*100)}`)+
+    kpiCard('fa-scale-balanced','#EA580C','ต่ำกว่าแผน (ปี 1)',baht(p.y1-a.y1)+' คน',`คิดเป็น ${pct((p.y1-a.y1)/p.y1*100)} ของแผนรับใหม่`)+
+    kpiCard('fa-coins','#059669','รายรับต่ำกว่าแผน',mil(p.rev-a.rev)+' ล.',`บรรลุ ${pct(a.rev/p.rev*100)} ของประมาณการแผน`);
+
+  const facs=F.slice().sort((x,y)=>(y.actual.y1/y.plan.y1)-(x.actual.y1/x.plan.y1));
+  mkBar('chFill', facs.map(f=>f.short),[
+    {label:'แผนรับ ปี 1', data:facs.map(f=>f.plan.y1), backgroundColor:'#cbd5e1', borderRadius:5},
+    {label:'รับจริง ปี 1', data:facs.map(f=>f.actual.y1), backgroundColor:'#002C6C', borderRadius:5}
+  ], {horizontal:true});
+
+  document.getElementById('paTable').innerHTML = F.slice().sort((a,b)=>b.actual.rev-a.actual.rev).map(f=>{
+    const diff=f.actual.rev-f.plan.rev, ach=f.actual.rev/f.plan.rev*100;
+    const col=diff>=0?'text-emerald-600 dark:text-emerald-400':'text-rose-600 dark:text-rose-400';
+    return `<tr class="border-b border-slate-100 hover:bg-slate-50">
+      <td class="py-2.5 pr-3 font-medium text-psru-navy dark:text-white">${f.short}</td>
+      <td class="py-2.5 px-3 text-right text-psru-textLight">${baht(f.plan.rev)}</td>
+      <td class="py-2.5 px-3 text-right font-semibold">${baht(f.actual.rev)}</td>
+      <td class="py-2.5 px-3 text-right ${col} font-semibold">${diff>=0?'+':''}${baht(diff)}</td>
+      <td class="py-2.5 pl-3 text-right"><span class="${ach>=100?'text-emerald-600 dark:text-emerald-400':'text-amber-600 dark:text-amber-400'} font-semibold">${pct(ach)}</span></td>
+    </tr>`;
+  }).join('');
+};
+
+// ---------- REPORT ----------
+function renderReport(){
+  const a=G.actual,p=G.plan,pv=G.prev2569,d=G.diff;
+  const topRev=F.slice().sort((x,y)=>y.actual.rev-x.actual.rev)[0];
+  const lowFill=F.slice().sort((x,y)=>(x.actual.total/x.plan.total)-(y.actual.total/y.plan.total))[0];
+  const over=F.filter(f=>f.actual.total>f.plan.total).map(f=>f.short);
+  const top3=M.slice().sort((x,y)=>y.revAct-x.revAct).slice(0,3);
+  document.getElementById('reportBody').innerHTML = `
+    <div class="text-center mb-6 pb-6 border-b border-slate-200">
+      <div class="text-psru-gold font-bold text-sm">มหาวิทยาลัยราชภัฏพิบูลสงคราม</div>
+      <h2 class="text-xl lg:text-2xl font-extrabold text-psru-navy dark:text-white mt-1">รายงานสรุปประมาณการรายรับงบประมาณเงินรายได้ ภาคปกติ</h2>
+      <div class="text-psru-textLight text-sm mt-1">ประจำปีงบประมาณ พ.ศ. 2570 · ข้อมูลรับจริง ณ 9 มิถุนายน 2569</div>
+    </div>
+
+    <h3 class="font-bold text-psru-navy dark:text-white text-lg mb-2"><i class="fa-solid fa-1 text-psru-gold mr-2"></i>บทสรุปสำหรับผู้บริหาร</h3>
+    <p class="text-psru-textDark dark:text-slate-200 leading-relaxed mb-4">
+      ในปีงบประมาณ พ.ศ. 2570 มหาวิทยาลัยมีจำนวนนักศึกษาคงอยู่รวม <b>${baht(a.total)} คน</b> (ตามแผน ${baht(p.total)} คน คิดเป็นอัตราการรับจริง ${pct(a.total/p.total*100)})
+      ประมาณการรายรับงบประมาณเงินรายได้ทั้งปีรวม <b>${baht(a.rev)} บาท</b> (${mil(a.rev)} ล้านบาท)
+      เมื่อหัก 5% เข้ากองทุน (${mil(a.fund5)} ล้านบาท) และ 20% ตามระเบียบวิธีงบประมาณ (${mil(a.budget20)} ล้านบาท) แล้ว
+      คงเหลือประมาณการสุทธิ <b>${baht(a.net)} บาท</b> (${mil(a.net)} ล้านบาท) สำหรับการบริหารจัดการ
+    </p>
+
+    <h3 class="font-bold text-psru-navy dark:text-white text-lg mb-2 mt-6"><i class="fa-solid fa-2 text-psru-gold mr-2"></i>การเติบโตเทียบปีงบประมาณ 2569</h3>
+    <p class="text-psru-textDark dark:text-slate-200 leading-relaxed mb-4">
+      รายรับเพิ่มขึ้นจากปี 2569 จำนวน <b>${baht(d.rev)} บาท</b> (${mil(d.rev)} ล้านบาท) หรือคิดเป็น <b>${pct(d.rev/pv.rev*100)}</b>
+      โดยจำนวนนักศึกษาเพิ่มขึ้น ${baht(d.total)} คน (ปี 1 เพิ่ม ${baht(d.y1)} คน · ปี 2-4 เพิ่ม ${baht(d.y24)} คน)
+      สะท้อนแนวโน้มการรับนักศึกษาและการคงอยู่ที่ดีขึ้น
+    </p>
+
+    <h3 class="font-bold text-psru-navy dark:text-white text-lg mb-2 mt-6"><i class="fa-solid fa-3 text-psru-gold mr-2"></i>ข้อสังเกตและข้อเสนอแนะ</h3>
+    <ul class="list-disc pl-6 space-y-2 text-psru-textDark dark:text-slate-200 leading-relaxed mb-4">
+      <li>คณะ<b>${topRev.short}</b> เป็นแหล่งรายรับหลัก คิดเป็น ${pct(topRev.actual.rev/a.rev*100)} ของรายรับทั้งหมด</li>
+      <li>สาขาวิชาที่สร้างรายรับสูงสุด 3 อันดับแรก ได้แก่ ${top3.map(m=>`<b>${m.major.replace('สาขาวิชา','')}</b> (${mil(m.revAct)} ล.)`).join(', ')}</li>
+      <li>คณะที่รับนักศึกษาจริงเกินแผน: <b>${over.length?over.join(', '):'ไม่มี'}</b> ควรพิจารณาความพร้อมด้านทรัพยากรรองรับ</li>
+      <li>คณะ<b>${lowFill.short}</b> มีอัตราการรับจริงต่ำสุด (${pct(lowFill.actual.total/lowFill.plan.total*100)} ของแผน) ควรทบทวนแผนการรับและกลยุทธ์ประชาสัมพันธ์หลักสูตร</li>
+      <li>รายรับรวมรับจริงต่ำกว่าประมาณการตามแผน ${mil(p.rev-a.rev)} ล้านบาท (บรรลุ ${pct(a.rev/p.rev*100)} ของแผน) จากการรับนักศึกษาปี 1 ที่ต่ำกว่าเป้า</li>
+    </ul>
+
+    <h3 class="font-bold text-psru-navy dark:text-white text-lg mb-2 mt-6"><i class="fa-solid fa-4 text-psru-gold mr-2"></i>หมายเหตุระเบียบวิธีการคำนวณ</h3>
+    <ul class="list-disc pl-6 space-y-1.5 text-psru-textLight text-sm leading-relaxed">
+      <li>รายรับคำนวณจากค่าบำรุงการศึกษา (2 ภาคเรียน) และค่าธรรมเนียมแรกเข้าของนักศึกษาใหม่ ตามประกาศฯ ณ 5 พ.ย. 68</li>
+      <li>หัก 5% เข้ากองทุน = (รายรับ × 5)/100 · หัก 20% ตามระเบียบวิธีงบประมาณ = ((รายรับ − 5%) × 20)/100</li>
+      <li>คงเหลือ = รายรับ − (5% + 20%) · ข้อมูลจำนวนนักศึกษา ณ 9 มิ.ย. 69 (กบศ.)</li>
+    </ul>
+    <div class="mt-6 pt-4 border-t border-slate-200 text-xs text-psru-textLight text-right">
+      จัดทำโดยระบบวิเคราะห์ข้อมูล Budget Pulse · กองนโยบายและแผน มหาวิทยาลัยราชภัฏพิบูลสงคราม
+    </div>`;
+}
+
+// ---------- chart factories ----------
+function mkBar(id, labels, datasets, opt={}){
+  if(charts['_'+id]) charts['_'+id].destroy();
+  const ctx=document.getElementById(id);
+  charts['_'+id]=new Chart(ctx,{ type:'bar', data:{labels,datasets},
+    options:{ responsive:true, maintainAspectRatio:false,
+      indexAxis: opt.horizontal?'y':'x',
+      plugins:{ legend:{display:datasets.length>1, labels:{color:tickColor()}},
+        tooltip:{ callbacks:{ label:c=>`${c.dataset.label}: ${opt.moneyMil? c.parsed[opt.horizontal?'x':'y'].toLocaleString('th-TH')+' ล.' : c.parsed[opt.horizontal?'x':'y'].toLocaleString('th-TH')}` } } },
+      scales:{
+        x:{ grid:{color:gridColor()}, ticks:{color:tickColor(), font:{size:11}} },
+        y:{ grid:{color:gridColor()}, ticks:{color:tickColor(), font:{size:11}} }
+      } } });
+}
+function mkDoughnut(id,labels,data,colors){
+  if(charts['_'+id]) charts['_'+id].destroy();
+  charts['_'+id]=new Chart(document.getElementById(id),{ type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:isDark()?'#1e293b':'#fff'}]},
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ label:c=>`${c.label}: ${(c.parsed/1e6).toLocaleString('th-TH',{maximumFractionDigits:2})} ล. (${(c.parsed/G.actual.rev*100).toFixed(1)}%)` } } } } });
+}
+function redrawCharts(){ const active=document.querySelector('.nav-item.active')?.dataset.nav;
+  if(charts[active]) charts[active](); }
+
+// ---------- export / print ----------
+function exportCSV(){
+  const rows=[['ระดับ','คณะ','สาขาวิชา','นศ.คงอยู่','ค่าบำรุง','รายรับ(บาท)','คงเหลือ(บาท)']];
+  F.forEach(f=>rows.push(['คณะ',f.short,'',f.actual.total,'',f.actual.rev,f.actual.net]));
+  M.forEach(m=>rows.push(['สาขาวิชา',m.faculty,m.major,m.studAct,m.fee,m.revAct,m.netAct]));
+  rows.push(['รวมทั้งสิ้น','','',G.actual.total,'',G.actual.rev,G.actual.net]);
+  const csv='﻿'+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='ประมาณการรายรับ_2570.csv'; a.click();
+}
+function printAll(){
+  document.querySelectorAll('.view').forEach(v=>v.classList.add('print-all'));
+  ['overview','faculty','planactual'].forEach(k=>{ if(charts[k]) charts[k](); });
+  setTimeout(()=>{ window.print();
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('print-all')); }, 400);
+}
+
+// ---------- init ----------
+renderKPI(); renderFaculty(); initFacFilter(); renderProgram(); renderReport(); renderHighlights();
+if(typeof Chart!=='undefined') charts.overview();
+</script>
+</body>
+</html>
