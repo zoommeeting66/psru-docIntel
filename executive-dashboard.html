@@ -101,6 +101,7 @@ tailwind.config = {
       <h1 id="pageTitle" class="font-extrabold text-psru-navy dark:text-white text-lg sm:text-xl truncate">ภาพรวมผู้บริหาร</h1>
       <p id="pageSub" class="text-psru-textLight text-xs hidden sm:block">สรุปการเข้าร่วมกิจกรรมของทีมบริหารทุกสัปดาห์</p>
     </div>
+    <div id="authBox" class="flex items-center gap-2"></div>
     <button onclick="toggleDark()" title="สลับโหมดมืด" class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-600 grid place-items-center text-psru-textLight hover:text-psru-gold">
       <i id="darkIcon" class="fa-solid fa-moon"></i>
     </button>
@@ -111,6 +112,8 @@ tailwind.config = {
     <!-- ============ OVERVIEW ============ -->
     <section id="view-overview" class="view active space-y-6">
       <div id="kpiGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></div>
+
+      <div id="thisWeekCard" class="card rounded-2xl p-5"></div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="card rounded-2xl p-5 lg:col-span-2">
@@ -203,6 +206,8 @@ tailwind.config = {
             <button onclick="builderAuto()" class="px-4 py-2 rounded-xl gradient-navy text-white text-sm font-semibold hover:opacity-90"><i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>สร้างฟอร์มอัตโนมัติ</button>
             <button onclick="builderAddActivity()" class="px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm font-semibold text-psru-textDark dark:text-slate-200 hover:border-psru-gold"><i class="fa-solid fa-plus mr-1.5"></i>เพิ่มกิจกรรม</button>
             <label class="px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm font-semibold text-psru-textDark dark:text-slate-200 hover:border-psru-gold cursor-pointer"><i class="fa-solid fa-file-import mr-1.5"></i>นำเข้า Excel/CSV<input type="file" accept=".xlsx,.xls,.csv" class="hidden" onchange="builderImportFile(event)"></label>
+            <button onclick="openRosterManager()" class="px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm font-semibold text-psru-textDark dark:text-slate-200 hover:border-psru-gold"><i class="fa-solid fa-users-gear mr-1.5"></i>จัดการรายชื่อผู้บริหาร</button>
+            <button onclick="openAdminUsers()" class="px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm font-semibold text-psru-textDark dark:text-slate-200 hover:border-psru-gold"><i class="fa-solid fa-user-shield mr-1.5"></i>จัดการผู้ใช้ระบบ</button>
           </div>
         </div>
         <!-- online backend config -->
@@ -212,6 +217,12 @@ tailwind.config = {
           <button onclick="saveApi()" class="px-3 py-2 rounded-xl bg-psru-navy text-white text-xs font-semibold">บันทึก URL</button>
           <span id="apiState" class="text-xs"></span>
         </div>
+      </div>
+
+      <!-- edit-mode banner -->
+      <div id="bEditBanner" class="hidden card rounded-2xl p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 flex items-center justify-between gap-3">
+        <div class="text-sm font-semibold text-amber-700 dark:text-amber-300"><i class="fa-solid fa-pen mr-1.5"></i>กำลังแก้ไขแบบสำรวจที่บันทึกไว้ — กด “บันทึกเข้าแดชบอร์ด” เพื่ออัปเดต</div>
+        <button onclick="builderCancelEdit()" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-xs font-semibold text-psru-textDark dark:text-slate-200 shrink-0">ยกเลิกการแก้ไข</button>
       </div>
 
       <!-- activities -->
@@ -410,6 +421,148 @@ function mergeRosterFromImport(rows){
   return {added,updated};
 }
 
+/* ===== in-app roster editor (add/edit/remove executives without a file) ===== */
+let RM=null;
+function openRosterManager(){
+  if(requireAuth('จัดการรายชื่อผู้บริหาร')) return;
+  RM=DEFAULT_ROSTER.map(p=>({...p}));
+  openModal(modalHead('จัดการรายชื่อผู้บริหาร','เพิ่ม แก้ไข หรือลบรายชื่อ/ตำแหน่งได้โดยตรง — บันทึกแล้วมีผลกับแบบสำรวจใหม่ทันที')+
+    `<div id="rmBody"></div>`);
+  renderRosterManager();
+}
+function renderRosterManager(){
+  const el=document.getElementById('rmBody'); if(!el||!RM) return;
+  const rows=RM.map((p,i)=>`
+    <div class="flex items-center gap-2 px-4 py-2 border-t border-slate-100 dark:border-slate-700">
+      <input type="number" value="${p.no}" oninput="rmField(${i},'no',this.value)" class="w-14 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-xs text-center">
+      <input type="text" value="${escapeHtml(p.name)}" oninput="rmField(${i},'name',this.value)" placeholder="ชื่อ-นามสกุล" class="flex-1 min-w-0 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm">
+      <input type="text" value="${escapeHtml(p.position)}" oninput="rmField(${i},'position',this.value)" placeholder="ตำแหน่ง" class="flex-1 min-w-0 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-xs hidden sm:block">
+      <button onclick="rmRemove(${i})" title="ลบรายชื่อนี้" class="text-rose-500 hover:text-rose-700 px-1 shrink-0"><i class="fa-solid fa-trash-can"></i></button>
+    </div>`).join('');
+  el.innerHTML=`
+    <div class="px-5 pt-4 flex items-center gap-2 text-xs text-psru-textLight">
+      <span class="w-14 text-center font-semibold">No.</span><span class="flex-1 font-semibold">ชื่อ-นามสกุล</span><span class="flex-1 font-semibold hidden sm:block">ตำแหน่ง</span><span class="w-6"></span>
+    </div>
+    <div class="max-h-80 overflow-y-auto">${rows||'<div class="px-5 py-6 text-center text-sm text-psru-textLight">ยังไม่มีรายชื่อ</div>'}</div>
+    <div class="p-4 flex flex-wrap gap-2 border-t border-slate-100 dark:border-slate-700">
+      <button onclick="rmAdd()" class="px-3 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-xs font-semibold text-psru-textDark dark:text-slate-200 hover:border-psru-gold"><i class="fa-solid fa-plus mr-1"></i>เพิ่มรายชื่อ</button>
+      <button onclick="rmSave()" class="ml-auto px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700"><i class="fa-solid fa-floppy-disk mr-1.5"></i>บันทึกรายชื่อ</button>
+      <button onclick="closeModal()" class="px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm font-semibold text-psru-textDark dark:text-slate-200">ยกเลิก</button>
+    </div>`;
+}
+function rmField(i,f,v){ if(f==='no'){ RM[i].no=parseInt(v,10)||RM[i].no; } else RM[i][f]=v; }
+function rmAdd(){ const nextNo=(RM.length?Math.max(...RM.map(p=>p.no)):0)+1; RM.push({no:nextNo,name:'',position:''}); renderRosterManager(); }
+function rmRemove(i){ if(!confirm('ลบรายชื่อนี้ออกจากระบบ?')) return; RM.splice(i,1); renderRosterManager(); }
+function rmSave(){
+  const clean=RM.filter(p=>(p.name||'').trim()).map(p=>({no:p.no,name:p.name.trim(),position:(p.position||'').trim()}));
+  if(!clean.length){ toast('กรุณากรอกชื่ออย่างน้อย 1 ท่าน',false); return; }
+  const nos=clean.map(p=>p.no);
+  if(new Set(nos).size!==nos.length){ toast('ลำดับ (No.) ซ้ำกัน กรุณาแก้ไขให้ไม่ซ้ำ',false); return; }
+  DEFAULT_ROSTER=clean.sort((a,b)=>a.no-b.no);
+  saveRosterOverride(DEFAULT_ROSTER);
+  closeModal();
+  renderBuilder();
+  toast('บันทึกรายชื่อผู้บริหารแล้ว ('+DEFAULT_ROSTER.length+' ท่าน)');
+}
+
+/* ============================ AUTH (lightweight — gates management actions only) ============================ */
+// แอปนี้ทำงานฝั่งเบราว์เซอร์ล้วน ไม่มีเซิร์ฟเวอร์ตรวจสิทธิ์จริง จึงใช้เพื่อกันผู้เข้าชมทั่วไปคลิกแก้ไขข้อมูลโดยไม่ตั้งใจเท่านั้น
+// (มุมมองดูข้อมูล: ภาพรวม/ตารางสถานะ/รายสัปดาห์/รายบุคคล/ช่วยเหลือ เปิดให้ทุกคนที่มีลิงก์ดูได้เสมอ ไม่ต้องเข้าสู่ระบบ)
+const AUTH_USERS_KEY='ep-auth-users';
+const AUTH_SESSION_KEY='ep-auth-session';
+async function sha256hex(str){
+  const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode('ep-salt::'+str));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function getAuthUsers(){ try{ return JSON.parse(localStorage.getItem(AUTH_USERS_KEY)||'[]'); }catch(e){ return []; } }
+function saveAuthUsers(list){ localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(list)); }
+async function ensureDefaultAdmin(){ if(!getAuthUsers().length) saveAuthUsers([{username:'admin', hash:await sha256hex('admin1234')}]); }
+ensureDefaultAdmin();
+function isAuthed(){ try{ return !!JSON.parse(sessionStorage.getItem(AUTH_SESSION_KEY)||'null'); }catch(e){ return false; } }
+function authUser(){ try{ return JSON.parse(sessionStorage.getItem(AUTH_SESSION_KEY)||'null'); }catch(e){ return null; } }
+async function doLogin(username,password){
+  const hash=await sha256hex(password);
+  const u=getAuthUsers().find(x=>x.username===username && x.hash===hash);
+  if(!u) return false;
+  sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({username}));
+  return true;
+}
+function logout(){ sessionStorage.removeItem(AUTH_SESSION_KEY); renderAuthUI(); toast('ออกจากระบบแล้ว'); nav('overview'); }
+function requireAuth(label){ if(isAuthed()) return false; toast('กรุณาเข้าสู่ระบบก่อนใช้งาน: '+label,false); openLoginModal(); return true; }
+function openLoginModal(onSuccess){
+  openModal(modalHead('เข้าสู่ระบบผู้ดูแล','สำหรับผู้ดูแลที่จัดการแบบสำรวจ/รายชื่อ/บัญชีผู้ใช้ — ผู้เข้าชมทั่วไปไม่ต้องเข้าสู่ระบบ')+`
+    <div class="p-5 space-y-3">
+      <div>
+        <label class="block text-xs font-semibold text-psru-textDark dark:text-slate-200 mb-1">ชื่อผู้ใช้</label>
+        <input id="authUser" type="text" autocomplete="username" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-psru-gold">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-psru-textDark dark:text-slate-200 mb-1">รหัสผ่าน</label>
+        <input id="authPass" type="password" autocomplete="current-password" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-psru-gold" onkeydown="if(event.key==='Enter')submitLogin()">
+      </div>
+      <div id="authErr" class="text-xs text-rose-500 hidden">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</div>
+      <button onclick="submitLogin()" class="w-full px-4 py-2.5 rounded-xl gradient-navy text-white text-sm font-semibold hover:opacity-90"><i class="fa-solid fa-right-to-bracket mr-1.5"></i>เข้าสู่ระบบ</button>
+      <p class="text-[11px] text-psru-textLight text-center">เริ่มต้นใช้ผู้ใช้ <b>admin</b> / รหัสผ่าน <b>admin1234</b> แล้วเปลี่ยนหรือเพิ่มผู้ใช้ได้ในเมนู “จัดการผู้ใช้ระบบ”</p>
+    </div>`);
+  window._authOnSuccess=onSuccess||null;
+  setTimeout(()=>document.getElementById('authUser')?.focus(),50);
+}
+async function submitLogin(){
+  const u=(document.getElementById('authUser').value||'').trim();
+  const p=(document.getElementById('authPass').value||'');
+  const ok=await doLogin(u,p);
+  if(!ok){ document.getElementById('authErr').classList.remove('hidden'); return; }
+  closeModal(); renderAuthUI(); toast('เข้าสู่ระบบสำเร็จ — สวัสดี '+u);
+  const cb=window._authOnSuccess; window._authOnSuccess=null;
+  if(typeof cb==='function') cb();
+}
+function renderAuthUI(){
+  const el=document.getElementById('authBox'); if(!el) return;
+  const u=authUser();
+  el.innerHTML = u
+    ? `<span class="hidden sm:inline text-xs text-psru-textLight mr-1">ผู้ดูแล: <b class="text-psru-navy dark:text-white">${escapeHtml(u.username)}</b></span>
+       <button onclick="logout()" title="ออกจากระบบ" class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-600 grid place-items-center text-psru-textLight hover:text-rose-500"><i class="fa-solid fa-right-from-bracket"></i></button>`
+    : `<button onclick="openLoginModal()" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 text-xs font-semibold text-psru-textDark dark:text-slate-200 hover:border-psru-gold"><i class="fa-solid fa-right-to-bracket mr-1"></i>เข้าสู่ระบบ</button>`;
+}
+
+/* ===== admin user management (add users who can manage surveys/activities) ===== */
+function openAdminUsers(){ if(requireAuth('จัดการผู้ใช้ระบบ')) return; renderAdminUsers(); }
+function renderAdminUsers(){
+  const users=getAuthUsers(); const me=authUser();
+  const rows=users.map((u,i)=>`
+    <div class="flex items-center gap-3 px-4 py-2.5 border-t border-slate-100 dark:border-slate-700">
+      <i class="fa-solid fa-user-shield text-psru-gold"></i>
+      <div class="flex-1 text-sm text-psru-textDark dark:text-slate-200">${escapeHtml(u.username)}${me&&me.username===u.username?' <span class="text-[10px] text-psru-textLight">(คุณ)</span>':''}</div>
+      <button ${users.length<=1?'disabled title="ต้องมีผู้ใช้อย่างน้อย 1 คน"':''} onclick="removeAdminUser(${i})" class="text-rose-500 hover:text-rose-700 px-1 disabled:opacity-30 disabled:cursor-not-allowed"><i class="fa-solid fa-trash-can"></i></button>
+    </div>`).join('');
+  openModal(modalHead('จัดการผู้ใช้ระบบ','เพิ่มผู้ใช้ที่สามารถจัดการแบบสำรวจ/กิจกรรม/รายชื่อผู้บริหารได้')+`
+    <div id="adminUsersList">${rows}</div>
+    <div class="p-4 border-t border-slate-100 dark:border-slate-700 space-y-2">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <input id="newAuthUser" type="text" placeholder="ชื่อผู้ใช้ใหม่" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm">
+        <input id="newAuthPass" type="password" placeholder="รหัสผ่าน (อย่างน้อย 4 ตัวอักษร)" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm">
+      </div>
+      <button onclick="addAdminUser()" class="w-full px-4 py-2 rounded-xl gradient-navy text-white text-sm font-semibold hover:opacity-90"><i class="fa-solid fa-user-plus mr-1.5"></i>เพิ่มผู้ใช้</button>
+    </div>`);
+}
+async function addAdminUser(){
+  const u=(document.getElementById('newAuthUser').value||'').trim();
+  const p=(document.getElementById('newAuthPass').value||'');
+  if(!u){ toast('กรุณากรอกชื่อผู้ใช้',false); return; }
+  if(p.length<4){ toast('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร',false); return; }
+  const users=getAuthUsers();
+  if(users.some(x=>x.username===u)){ toast('มีชื่อผู้ใช้นี้อยู่แล้ว',false); return; }
+  users.push({username:u, hash:await sha256hex(p)});
+  saveAuthUsers(users);
+  toast('เพิ่มผู้ใช้ '+u+' แล้ว');
+  renderAdminUsers();
+}
+function removeAdminUser(i){
+  const users=getAuthUsers(); if(users.length<=1) return;
+  if(!confirm('ลบผู้ใช้ '+users[i].username+' ออกจากระบบ?')) return;
+  users.splice(i,1); saveAuthUsers(users); renderAdminUsers();
+}
+
 let WEEKS, PEOPLE, ROSTER, ALL_ACTS, totalActs, overallStatus, overallTotal, avgRate;
 function actStat(a){ const s={attend:0,absent:0,pending:0}; a.attendees.forEach(p=>s[p.status]++); s.total=a.attendees.length; s.rate=s.total?Math.round(s.attend/s.total*100):0; return s; }
 
@@ -438,7 +591,7 @@ rebuildWeeks(); computeAggregates();
 
 function rerenderAll(){
   rebuildWeeks(); computeAggregates();
-  renderKPI(); renderInsights(); renderMatrix(); renderWeekTabs();
+  renderKPI(); renderThisWeek(); renderInsights(); renderMatrix(); renderWeekTabs();
   if(curWeek>=WEEKS.length) curWeek=WEEKS.length-1;
   if(curWeek<0) curWeek=0;
   renderWeek(); renderPeople(); renderBuilderSaved();
@@ -455,6 +608,7 @@ const TITLES = {
   help:['ช่วยเหลือ & คู่มือ','สถานะระบบ คำแนะนำเบื้องต้น และขั้นตอนการสร้างแบบสำรวจ']
 };
 function nav(v){
+  if(v==='builder' && !isAuthed()){ openLoginModal(()=>nav('builder')); return; }
   document.querySelectorAll('.nav-item[data-nav]').forEach(n=>n.classList.toggle('active',n.dataset.nav===v));
   document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
@@ -510,6 +664,33 @@ function renderKPI(){
       </div>
     </div>`).join('');
 }
+function renderThisWeek(){
+  const el=document.getElementById('thisWeekCard'); if(!el||!WEEKS.length) return;
+  const wi=WEEKS.length-1, w=WEEKS[wi];
+  let at=0,ab=0,pe=0; w.activities.forEach(a=>a.attendees.forEach(p=>{if(p.status==='attend')at++;else if(p.status==='absent')ab++;else pe++;}));
+  const tot=at+ab+pe, rate=tot?Math.round(at/tot*100):0;
+  const items=w.activities.slice(0,4).map(a=>{
+    const s=actStat(a);
+    return `<div class="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-700/40">
+      <div class="min-w-0"><div class="text-sm font-semibold text-psru-textDark dark:text-slate-200 truncate">${a.title}</div>
+      ${a.when?`<div class="text-[11px] text-psru-textLight truncate"><i class="fa-regular fa-clock w-3.5"></i>${a.when}</div>`:''}</div>
+      <span class="shrink-0 text-xs font-extrabold ${s.rate>=60?'text-emerald-600':s.rate>=35?'text-amber-600':'text-rose-600'}">${s.rate}%</span>
+    </div>`;
+  }).join('');
+  const more = w.activities.length>4 ? `<div class="text-xs text-psru-textLight pl-1">และอีก ${w.activities.length-4} กิจกรรม…</div>` : '';
+  el.innerHTML=`
+    <div class="flex flex-wrap items-start justify-between gap-4 mb-3">
+      <div>
+        <div class="flex items-center gap-2 mb-0.5"><i class="fa-solid fa-calendar-day text-psru-gold"></i><h3 class="font-bold text-psru-navy dark:text-white">สัปดาห์นี้</h3></div>
+        <div class="text-lg font-extrabold text-psru-navy dark:text-white">${w.label}</div>
+        <div class="text-xs text-psru-textLight">${w.activities.length} กิจกรรม · อัตราเข้าร่วมเฉลี่ย ${rate}%</div>
+      </div>
+      <button onclick="goWeek(${wi})" class="px-4 py-2 rounded-xl gradient-navy text-white text-sm font-semibold hover:opacity-90 shrink-0"><i class="fa-solid fa-calendar-week mr-1.5"></i>ดูรายละเอียดรายสัปดาห์</button>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${items}</div>
+    ${more}`;
+}
+function goWeek(i){ curWeek=i; nav('weekly'); renderWeekTabs(); renderWeek(); }
 function renderInsights(){
   const ranked=[...ROSTER].sort((a,b)=>b.rate-a.rate);
   const best=ranked[0], worst=ranked[ranked.length-1];
@@ -713,7 +894,7 @@ function toast(msg,ok){
 
 /* ============================ SURVEY BUILDER ============================ */
 // in-memory draft: activities each carry a status map {no: 'attend'|'absent'|'pending'}
-let BD = { activities:[] };
+let BD = { activities:[], editIndex:null };
 function blankActivity(){ const st={}; DEFAULT_ROSTER.forEach(p=>st[p.no]='pending'); return {title:'',when:'',where:'',st}; }
 function builderAuto(){
   const n=Math.max(1,Math.min(20,parseInt(document.getElementById('bCount').value||'3',10)));
@@ -732,6 +913,8 @@ function actDraftStat(a){ let at=0,ab=0,pe=0; DEFAULT_ROSTER.forEach(p=>{const s
 function renderBuilder(){
   const wrap=document.getElementById('bActivities');
   const empty=document.getElementById('bEmpty'), actions=document.getElementById('bActions');
+  const banner=document.getElementById('bEditBanner');
+  if(banner) banner.classList.toggle('hidden', BD.editIndex==null);
   if(!BD.activities.length){ wrap.innerHTML=''; empty.classList.remove('hidden'); actions.classList.add('hidden'); return; }
   empty.classList.add('hidden'); actions.classList.remove('hidden');
   wrap.innerHTML=BD.activities.map((a,i)=>{
@@ -794,8 +977,9 @@ function renderBuilder(){
 function draftToWeek(){
   const label=(document.getElementById('bLabel').value||'').trim() || ('แบบสำรวจใหม่ '+new Date().toLocaleDateString('th-TH'));
   const dl=(document.getElementById('bDeadline').value||'').trim();
+  const editing = BD.editIndex!=null ? CUSTOM[BD.editIndex] : null;
   return {
-    sid:'s'+Date.now().toString(36), label, custom:true,
+    sid: editing ? editing.sid : 's'+Date.now().toString(36), label, custom:true,
     deadline: dl ? new Date(dl).getTime() : null,
     roster: DEFAULT_ROSTER.map(p=>({no:p.no,name:p.name,position:p.position})),
     activities: BD.activities.map(a=>({
@@ -804,12 +988,33 @@ function draftToWeek(){
     }))
   };
 }
+function builderEdit(i){
+  const w=CUSTOM[i]; if(!w) return;
+  BD.editIndex=i;
+  BD.activities=w.activities.map(a=>{
+    const st={}; DEFAULT_ROSTER.forEach(p=>{ const pr=a.attendees.find(x=>x.no===p.no); st[p.no]=pr?pr.status:'pending'; });
+    return {title:a.title||'', when:a.when||'', where:a.where||'', st};
+  });
+  document.getElementById('bLabel').value=w.label||'';
+  document.getElementById('bDeadline').value=w.deadline?new Date(w.deadline-new Date(w.deadline).getTimezoneOffset()*60000).toISOString().slice(0,16):'';
+  renderBuilder();
+  nav('builder');
+  toast('กำลังแก้ไขแบบสำรวจ: '+w.label);
+}
+function builderCancelEdit(){
+  BD={activities:[],editIndex:null}; document.getElementById('bLabel').value=''; document.getElementById('bDeadline').value=''; renderBuilder();
+}
 function builderSave(){
   if(!BD.activities.length){ toast('ยังไม่มีกิจกรรม',false); return; }
-  CUSTOM.push(draftToWeek()); saveCustom(CUSTOM);
-  BD={activities:[]}; document.getElementById('bLabel').value=''; document.getElementById('bDeadline').value=''; renderBuilder();
+  if(BD.editIndex!=null){
+    CUSTOM[BD.editIndex]=draftToWeek(); saveCustom(CUSTOM);
+    toast('บันทึกการแก้ไขแล้ว — ผลรวมอัปเดตในทุกหน้าของแดชบอร์ด');
+  } else {
+    CUSTOM.push(draftToWeek()); saveCustom(CUSTOM);
+    toast('บันทึกแล้ว — ผลรวมอัปเดตในทุกหน้าของแดชบอร์ด');
+  }
+  BD={activities:[],editIndex:null}; document.getElementById('bLabel').value=''; document.getElementById('bDeadline').value=''; renderBuilder();
   rerenderAll();
-  toast('บันทึกแล้ว — ผลรวมอัปเดตในทุกหน้าของแดชบอร์ด');
 }
 function dlText(ts){ if(!ts) return ''; const d=new Date(ts);
   return d.toLocaleString('th-TH',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
@@ -829,6 +1034,7 @@ function renderBuilderSaved(){
         <button onclick="builderDelete(${i})" class="text-rose-500 hover:text-rose-700 text-sm px-2" title="ลบ"><i class="fa-solid fa-trash-can"></i></button>
       </div>
       <div class="flex flex-wrap gap-2 mt-2 pl-7">
+        <button onclick="builderEdit(${i})" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-xs font-semibold text-psru-textDark dark:text-slate-200 hover:border-psru-gold"><i class="fa-solid fa-pen mr-1"></i>แก้ไข</button>
         <button onclick="openShareLink(${i})" class="px-3 py-1.5 rounded-lg bg-psru-navy text-white text-xs font-semibold hover:opacity-90"><i class="fa-solid fa-link mr-1"></i>ลิงก์ให้ตอบ</button>
         <button onclick="openCollect(${i})" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-xs font-semibold text-psru-textDark dark:text-slate-200 hover:border-psru-gold"><i class="fa-solid fa-inbox mr-1"></i>นำเข้าคำตอบ</button>
         <button onclick="openResults(${i})" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-xs font-semibold text-psru-textDark dark:text-slate-200 hover:border-psru-gold"><i class="fa-solid fa-chart-pie mr-1"></i>สรุปผล</button>
@@ -1269,12 +1475,46 @@ function ingestRows(rows, fname){
     if(no) acts[title].st[no]=st;
   });
   if(!order.length){ toast('ไม่พบข้อมูลกิจกรรม',false); return; }
-  BD.activities=order.map(t=>acts[t]);
   const wk=ci.week>=0 && rows[1] ? String(rows[1][ci.week]||'').trim():'';
-  if(wk) document.getElementById('bLabel').value=wk;
+  showImportPicker(order, acts, wk, rosterResult);
+}
+// ให้ผู้ใช้เลือกว่าจะนำเข้ากิจกรรมใดจากไฟล์บ้าง (ไม่บังคับนำเข้าทั้งหมด)
+function showImportPicker(order, acts, wk, rosterResult){
+  const rowsHtml=order.map((t,i)=>{
+    const a=acts[t]; const s=actDraftStat(a);
+    return `<label class="flex items-start gap-3 px-4 py-2.5 border-t border-slate-100 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/40">
+      <input type="checkbox" checked data-imp-idx="${i}" class="mt-1 imp-chk w-4 h-4 accent-psru-navy shrink-0">
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-medium text-psru-textDark dark:text-slate-200">${escapeHtml(t)}</div>
+        <div class="text-[11px] text-psru-textLight">${a.when?escapeHtml(a.when)+' · ':''}เข้าร่วม ${s.at} / ไม่เข้าร่วม ${s.ab}</div>
+      </div>
+    </label>`;
+  }).join('');
+  window._importPending={order,acts,wk,rosterResult};
+  openModal(modalHead('เลือกกิจกรรมที่ต้องการนำเข้า','พบ '+order.length+' กิจกรรมในไฟล์ — ติ๊กเลือกเฉพาะที่ต้องการนำเข้า')+`
+    <div class="px-5 pt-3 flex gap-3 text-xs">
+      <button onclick="document.querySelectorAll('.imp-chk').forEach(c=>c.checked=true)" class="text-psru-royal underline">เลือกทั้งหมด</button>
+      <button onclick="document.querySelectorAll('.imp-chk').forEach(c=>c.checked=false)" class="text-psru-textLight underline">ไม่เลือกเลย</button>
+    </div>
+    <div class="max-h-96 overflow-y-auto mt-1">${rowsHtml}</div>
+    <div class="p-4 flex gap-2 border-t border-slate-100 dark:border-slate-700 sticky bottom-0 bg-white dark:bg-slate-800 rounded-b-2xl">
+      <button onclick="confirmImportPicker()" class="px-4 py-2 rounded-xl gradient-navy text-white text-sm font-semibold flex-1"><i class="fa-solid fa-file-import mr-1.5"></i>นำเข้ากิจกรรมที่เลือก</button>
+      <button onclick="closeModal()" class="px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm font-semibold text-psru-textDark dark:text-slate-200">ยกเลิก</button>
+    </div>`);
+}
+function confirmImportPicker(){
+  const pending=window._importPending; if(!pending) return;
+  const {order,acts,wk,rosterResult}=pending;
+  const checked=[...document.querySelectorAll('.imp-chk')].filter(c=>c.checked).map(c=>parseInt(c.dataset.impIdx,10));
+  if(!checked.length){ toast('ยังไม่ได้เลือกกิจกรรม',false); return; }
+  const chosen=checked.map(i=>acts[order[i]]);
+  BD.activities=BD.activities.concat(chosen);
+  if(wk && !(document.getElementById('bLabel').value||'').trim()) document.getElementById('bLabel').value=wk;
+  window._importPending=null;
+  closeModal();
   renderBuilder();
   nav('builder');
-  let msg='นำเข้า '+order.length+' กิจกรรมจากไฟล์แล้ว';
+  let msg='นำเข้า '+chosen.length+' จาก '+order.length+' กิจกรรมในไฟล์แล้ว';
   if(rosterResult.added||rosterResult.updated) msg+=` · ผู้บริหาร: เพิ่ม ${rosterResult.added} ท่าน อัปเดต ${rosterResult.updated} ท่าน`;
   toast(msg);
 }
@@ -1337,8 +1577,8 @@ if(checkRespondRoute()){
   if(document.documentElement.classList.contains('dark')) document.getElementById('darkIcon').className='fa-solid fa-sun';
 } else {
   // content first (never depends on external libs), charts last (Chart.js via CDN)
-  renderKPI(); renderInsights(); renderMatrix(); renderWeekTabs(); renderWeek(); renderPeople();
-  renderBuilder(); renderBuilderSaved(); renderApiState(); renderHelp();
+  renderKPI(); renderThisWeek(); renderInsights(); renderMatrix(); renderWeekTabs(); renderWeek(); renderPeople();
+  renderBuilder(); renderBuilderSaved(); renderApiState(); renderHelp(); renderAuthUI();
   if(document.documentElement.classList.contains('dark')) document.getElementById('darkIcon').className='fa-solid fa-sun';
   function bootCharts(tries){ if(typeof Chart!=='undefined'){ renderCharts(); } else if((tries||0)<40){ setTimeout(()=>bootCharts((tries||0)+1),150); } }
   bootCharts();
