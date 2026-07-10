@@ -71,20 +71,36 @@ tailwind.config = {
     </div>
   </div>
   <nav class="flex-1 py-4 space-y-1 overflow-y-auto text-sm" role="navigation" aria-label="เมนูหลัก">
-    <a data-nav="builder" class="nav-item nav-primary flex items-center gap-3 px-4 py-3.5 mx-3 mb-3 rounded-xl cursor-pointer" role="button" tabindex="0" aria-label="สร้างแบบสำรวจ — เริ่มต้นใช้งานที่นี่">
-      <i class="fa-solid fa-clipboard-list w-5 text-center text-lg text-psru-gold"></i>
-      <span class="flex-1 font-bold text-[15px]">สร้างแบบสำรวจ</span>
-      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-psru-gold text-psru-navy shrink-0">เริ่มที่นี่</span>
-    </a>
-    <div class="mx-5 mb-2 border-t border-white/10" aria-hidden="true"></div>
-    <a data-nav="overview" class="nav-item active flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="ภาพรวมผู้บริหาร"><i class="fa-solid fa-gauge-high w-5 text-center"></i>ภาพรวมผู้บริหาร</a>
-    <a data-nav="matrix" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="ตารางสถานะรวม"><i class="fa-solid fa-table-cells w-5 text-center"></i>ตารางสถานะรวม</a>
-    <a data-nav="weekly" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="รายสัปดาห์"><i class="fa-solid fa-calendar-week w-5 text-center"></i>รายสัปดาห์</a>
-    <a data-nav="people" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="รายบุคคลและอันดับ"><i class="fa-solid fa-ranking-star w-5 text-center"></i>รายบุคคล &amp; อันดับ</a>
-    <div class="px-5 pt-5 pb-2 text-[11px] uppercase tracking-wider text-blue-200/50">เครื่องมือ</div>
-    <a data-nav="help" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="ช่วยเหลือและคู่มือการใช้งาน"><i class="fa-solid fa-circle-question w-5 text-center"></i>ช่วยเหลือ &amp; คู่มือ</a>
-    <a onclick="window.print()" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="พิมพ์หรือบันทึกเป็น PDF" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.print();}"><i class="fa-solid fa-print w-5 text-center"></i>พิมพ์ / บันทึก PDF</a>
-    <a onclick="exportCSV()" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="ส่งออกเป็นไฟล์ CSV" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();exportCSV();}"><i class="fa-solid fa-file-csv w-5 text-center"></i>ส่งออก CSV</a>
+    <!-- สาธารณะ: ทุกคนเข้าดูได้ ไม่ต้องเข้าสู่ระบบ -->
+    <div class="px-5 pb-2 text-[11px] uppercase tracking-wider text-blue-200/50">หน้าสาธารณะ</div>
+    <a data-nav="weekly" class="nav-item active flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="รายงานรายสัปดาห์"><i class="fa-solid fa-calendar-week w-5 text-center"></i>รายงานรายสัปดาห์</a>
+
+    <!-- ผู้ดูแลระบบ: ต้องเข้าสู่ระบบก่อน -->
+    <div id="adminNav" class="hidden">
+      <div class="mx-5 my-2 border-t border-white/10" aria-hidden="true"></div>
+      <div class="px-5 pb-2 text-[11px] uppercase tracking-wider text-psru-gold/70"><i class="fa-solid fa-user-shield mr-1"></i>ผู้ดูแลระบบ</div>
+      <a data-nav="builder" class="nav-item nav-primary flex items-center gap-3 px-4 py-3.5 mx-3 mb-3 rounded-xl cursor-pointer" role="button" tabindex="0" aria-label="สร้างแบบสำรวจ">
+        <i class="fa-solid fa-clipboard-list w-5 text-center text-lg text-psru-gold"></i>
+        <span class="flex-1 font-bold text-[15px]">สร้างแบบสำรวจ</span>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-psru-gold text-psru-navy shrink-0">เริ่มที่นี่</span>
+      </a>
+      <a data-nav="overview" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="ภาพรวมผู้บริหาร"><i class="fa-solid fa-gauge-high w-5 text-center"></i>ภาพรวมผู้บริหาร</a>
+      <a data-nav="matrix" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="ตารางสถานะรวม"><i class="fa-solid fa-table-cells w-5 text-center"></i>ตารางสถานะรวม</a>
+      <a data-nav="people" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="รายบุคคลและอันดับ"><i class="fa-solid fa-ranking-star w-5 text-center"></i>รายบุคคล &amp; อันดับ</a>
+      <div class="px-5 pt-5 pb-2 text-[11px] uppercase tracking-wider text-blue-200/50">เครื่องมือ</div>
+      <a data-nav="help" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="ช่วยเหลือและคู่มือการใช้งาน"><i class="fa-solid fa-circle-question w-5 text-center"></i>ช่วยเหลือ &amp; คู่มือ</a>
+      <a onclick="window.print()" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="พิมพ์หรือบันทึกเป็น PDF" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.print();}"><i class="fa-solid fa-print w-5 text-center"></i>พิมพ์ / บันทึก PDF</a>
+      <a onclick="exportCSV()" class="nav-item flex items-center gap-3 px-5 py-3 cursor-pointer" role="button" tabindex="0" aria-label="ส่งออกเป็นไฟล์ CSV" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();exportCSV();}"><i class="fa-solid fa-file-csv w-5 text-center"></i>ส่งออก CSV</a>
+    </div>
+
+    <!-- ปุ่มเข้าสู่ระบบ (แสดงเมื่อยังไม่ได้เข้าสู่ระบบ) -->
+    <div id="navLoginPrompt" class="px-3 pt-4">
+      <a onclick="openLoginModal()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLoginModal();}" class="nav-primary flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer" role="button" tabindex="0" aria-label="เข้าสู่ระบบผู้ดูแล">
+        <i class="fa-solid fa-right-to-bracket w-5 text-center text-psru-gold"></i>
+        <span class="flex-1 font-bold">เข้าสู่ระบบผู้ดูแล</span>
+      </a>
+      <p class="px-2 pt-2 text-[11px] text-blue-200/50 leading-snug">ผู้ดูแลเข้าสู่ระบบเพื่อสร้าง/จัดการแบบสำรวจ · หน้ารายงานรายสัปดาห์เปิดให้ทุกคนดูได้</p>
+    </div>
   </nav>
   <div class="px-5 py-4 border-t border-white/10 text-[11px] text-blue-200/60">
     © 2569 มหาวิทยาลัยราชภัฏพิบูลสงคราม<br>งานกิจการสภามหาวิทยาลัยและเลขานุการผู้บริหาร
@@ -98,8 +114,8 @@ tailwind.config = {
   <header id="topbar" class="sticky top-0 z-20 bg-white/90 dark:bg-slate-800/90 backdrop-blur border-b border-slate-100 px-4 sm:px-6 py-3 flex items-center gap-3">
     <button onclick="toggleSidebar()" class="lg:hidden text-psru-navy dark:text-white text-xl"><i class="fa-solid fa-bars"></i></button>
     <div class="flex-1 min-w-0">
-      <h1 id="pageTitle" class="font-extrabold text-psru-navy dark:text-white text-lg sm:text-xl truncate">ภาพรวมผู้บริหาร</h1>
-      <p id="pageSub" class="text-psru-textLight text-xs hidden sm:block">สรุปการเข้าร่วมกิจกรรมของทีมบริหารทุกสัปดาห์</p>
+      <h1 id="pageTitle" class="font-extrabold text-psru-navy dark:text-white text-lg sm:text-xl truncate">รายงานรายสัปดาห์</h1>
+      <p id="pageSub" class="text-psru-textLight text-xs hidden sm:block">รายงานสาธารณะ — เลือกสัปดาห์เพื่อดูกิจกรรมและผู้เข้าร่วม</p>
     </div>
     <div id="authBox" class="flex items-center gap-2"></div>
     <button onclick="toggleDark()" title="สลับโหมดมืด" class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-600 grid place-items-center text-psru-textLight hover:text-psru-gold">
@@ -110,7 +126,7 @@ tailwind.config = {
   <main class="flex-1 p-4 sm:p-6 max-w-[1400px] w-full mx-auto">
 
     <!-- ============ OVERVIEW ============ -->
-    <section id="view-overview" class="view active space-y-6">
+    <section id="view-overview" class="view space-y-6">
       <div id="kpiGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></div>
 
       <div id="thisWeekCard" class="card rounded-2xl p-5"></div>
@@ -164,7 +180,11 @@ tailwind.config = {
     </section>
 
     <!-- ============ WEEKLY ============ -->
-    <section id="view-weekly" class="view space-y-4">
+    <section id="view-weekly" class="view active space-y-4">
+      <div id="weeklyPublicNote" class="card rounded-2xl p-4 flex items-center gap-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20">
+        <i class="fa-solid fa-circle-info text-psru-royal text-lg shrink-0"></i>
+        <div class="text-sm text-psru-textDark dark:text-slate-200">รายงานการเข้าร่วมกิจกรรมของผู้บริหารรายสัปดาห์ — อัปเดตตามแบบสำรวจที่เผยแพร่จริง</div>
+      </div>
       <div class="flex flex-wrap items-center gap-2" id="weekTabs"></div>
       <div id="weekHead" class="card rounded-2xl p-5"></div>
       <div id="weekActivities" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
@@ -455,14 +475,14 @@ function rmAdd(){ const nextNo=(RM.length?Math.max(...RM.map(p=>p.no)):0)+1; RM.
 function rmRemove(i){ if(!confirm('ลบรายชื่อนี้ออกจากระบบ?')) return; RM.splice(i,1); renderRosterManager(); }
 function rmSave(){
   const clean=RM.filter(p=>(p.name||'').trim()).map(p=>({no:p.no,name:p.name.trim(),position:(p.position||'').trim()}));
-  if(!clean.length){ toast('กรุณากรอกชื่ออย่างน้อย 1 ท่าน',false); return; }
+  if(!clean.length){ toast('กรอกชื่ออย่างน้อย 1 ท่าน',false); return; }
   const nos=clean.map(p=>p.no);
-  if(new Set(nos).size!==nos.length){ toast('ลำดับ (No.) ซ้ำกัน กรุณาแก้ไขให้ไม่ซ้ำ',false); return; }
+  if(new Set(nos).size!==nos.length){ toast('ลำดับ (No.) ซ้ำกัน',false); return; }
   DEFAULT_ROSTER=clean.sort((a,b)=>a.no-b.no);
   saveRosterOverride(DEFAULT_ROSTER);
   closeModal();
   renderBuilder();
-  toast('บันทึกรายชื่อผู้บริหารแล้ว ('+DEFAULT_ROSTER.length+' ท่าน)');
+  toast('บันทึกรายชื่อแล้ว ('+DEFAULT_ROSTER.length+' ท่าน)');
 }
 
 /* ============================ AUTH (lightweight — gates management actions only) ============================ */
@@ -487,8 +507,8 @@ async function doLogin(username,password){
   sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({username}));
   return true;
 }
-function logout(){ sessionStorage.removeItem(AUTH_SESSION_KEY); renderAuthUI(); toast('ออกจากระบบแล้ว'); nav('overview'); }
-function requireAuth(label){ if(isAuthed()) return false; toast('กรุณาเข้าสู่ระบบก่อนใช้งาน: '+label,false); openLoginModal(); return true; }
+function logout(){ sessionStorage.removeItem(AUTH_SESSION_KEY); renderAuthUI(); nav('weekly'); toast('ออกจากระบบแล้ว'); }
+function requireAuth(label){ if(isAuthed()) return false; openLoginModal(); return true; }
 function openLoginModal(onSuccess){
   openModal(modalHead('เข้าสู่ระบบผู้ดูแล','สำหรับผู้ดูแลที่จัดการแบบสำรวจ/รายชื่อ/บัญชีผู้ใช้ — ผู้เข้าชมทั่วไปไม่ต้องเข้าสู่ระบบ')+`
     <div class="p-5 space-y-3">
@@ -512,14 +532,18 @@ async function submitLogin(){
   const p=(document.getElementById('authPass').value||'');
   const ok=await doLogin(u,p);
   if(!ok){ document.getElementById('authErr').classList.remove('hidden'); return; }
-  closeModal(); renderAuthUI(); toast('เข้าสู่ระบบสำเร็จ — สวัสดี '+u);
+  closeModal(); renderAuthUI(); toast('เข้าสู่ระบบแล้ว');
   const cb=window._authOnSuccess; window._authOnSuccess=null;
-  if(typeof cb==='function') cb();
+  if(typeof cb==='function') cb(); else nav('overview');
 }
 function renderAuthUI(){
-  const el=document.getElementById('authBox'); if(!el) return;
+  const el=document.getElementById('authBox');
   const u=authUser();
-  el.innerHTML = u
+  // แสดง/ซ่อนเมนูฝั่งผู้ดูแล และปุ่มเข้าสู่ระบบในแถบข้าง
+  const adminNav=document.getElementById('adminNav'), loginPrompt=document.getElementById('navLoginPrompt');
+  if(adminNav) adminNav.classList.toggle('hidden', !u);
+  if(loginPrompt) loginPrompt.classList.toggle('hidden', !!u);
+  if(el) el.innerHTML = u
     ? `<span class="hidden sm:inline text-xs text-psru-textLight mr-1">ผู้ดูแล: <b class="text-psru-navy dark:text-white">${escapeHtml(u.username)}</b></span>
        <button onclick="logout()" title="ออกจากระบบ" class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-600 grid place-items-center text-psru-textLight hover:text-rose-500"><i class="fa-solid fa-right-from-bracket"></i></button>`
     : `<button onclick="openLoginModal()" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 text-xs font-semibold text-psru-textDark dark:text-slate-200 hover:border-psru-gold"><i class="fa-solid fa-right-to-bracket mr-1"></i>เข้าสู่ระบบ</button>`;
@@ -602,13 +626,15 @@ function rerenderAll(){
 const TITLES = {
   overview:['ภาพรวมผู้บริหาร','สรุปการเข้าร่วมกิจกรรมของทีมบริหารทุกสัปดาห์'],
   matrix:['ตารางสถานะรวม','ผู้บริหารทุกคน เทียบกับทุกกิจกรรมในมุมมองเดียว'],
-  weekly:['รายสัปดาห์','เลือกสัปดาห์เพื่อดูรายละเอียดกิจกรรมและผู้เข้าร่วม'],
+  weekly:['รายงานรายสัปดาห์','รายงานสาธารณะ — เลือกสัปดาห์เพื่อดูกิจกรรมและผู้เข้าร่วม'],
   people:['รายบุคคล & อันดับ','สถิติการเข้าร่วมของผู้บริหารแต่ละท่าน'],
   builder:['สร้างแบบสำรวจ','สร้างแบบสำรวจการเข้าร่วมกิจกรรมใหม่ พร้อมเติมรายชื่อผู้บริหารอัตโนมัติ'],
   help:['ช่วยเหลือ & คู่มือ','สถานะระบบ คำแนะนำเบื้องต้น และขั้นตอนการสร้างแบบสำรวจ']
 };
+// หน้าสาธารณะที่ทุกคนเข้าดูได้โดยไม่ต้องเข้าสู่ระบบ (เฉพาะรายงานรายสัปดาห์)
+const PUBLIC_VIEWS = ['weekly'];
 function nav(v){
-  if(v==='builder' && !isAuthed()){ openLoginModal(()=>nav('builder')); return; }
+  if(!PUBLIC_VIEWS.includes(v) && !isAuthed()){ openLoginModal(()=>nav(v)); return; }
   document.querySelectorAll('.nav-item[data-nav]').forEach(n=>n.classList.toggle('active',n.dataset.nav===v));
   document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
@@ -899,7 +925,7 @@ function blankActivity(){ const st={}; DEFAULT_ROSTER.forEach(p=>st[p.no]='pendi
 function builderAuto(){
   const n=Math.max(1,Math.min(20,parseInt(document.getElementById('bCount').value||'3',10)));
   BD.activities=Array.from({length:n},()=>blankActivity());
-  renderBuilder(); toast('สร้างฟอร์มอัตโนมัติ '+n+' กิจกรรม พร้อมรายชื่อผู้บริหาร');
+  renderBuilder(); toast('สร้างฟอร์ม '+n+' กิจกรรมแล้ว');
 }
 function builderAddActivity(){ BD.activities.push(blankActivity()); renderBuilder(); }
 function builderRemoveActivity(i){ BD.activities.splice(i,1); renderBuilder(); }
@@ -999,7 +1025,7 @@ function builderEdit(i){
   document.getElementById('bDeadline').value=w.deadline?new Date(w.deadline-new Date(w.deadline).getTimezoneOffset()*60000).toISOString().slice(0,16):'';
   renderBuilder();
   nav('builder');
-  toast('กำลังแก้ไขแบบสำรวจ: '+w.label);
+  toast('แก้ไข: '+w.label);
 }
 function builderCancelEdit(){
   BD={activities:[],editIndex:null}; document.getElementById('bLabel').value=''; document.getElementById('bDeadline').value=''; renderBuilder();
@@ -1008,10 +1034,10 @@ function builderSave(){
   if(!BD.activities.length){ toast('ยังไม่มีกิจกรรม',false); return; }
   if(BD.editIndex!=null){
     CUSTOM[BD.editIndex]=draftToWeek(); saveCustom(CUSTOM);
-    toast('บันทึกการแก้ไขแล้ว — ผลรวมอัปเดตในทุกหน้าของแดชบอร์ด');
+    toast('บันทึกการแก้ไขแล้ว');
   } else {
     CUSTOM.push(draftToWeek()); saveCustom(CUSTOM);
-    toast('บันทึกแล้ว — ผลรวมอัปเดตในทุกหน้าของแดชบอร์ด');
+    toast('บันทึกแล้ว');
   }
   BD={activities:[],editIndex:null}; document.getElementById('bLabel').value=''; document.getElementById('bDeadline').value=''; renderBuilder();
   rerenderAll();
@@ -1068,7 +1094,7 @@ async function openShareLink(i){
   let online=false;
   if(API_BASE){
     try{ await apiPublishSurvey(w); online=true; }
-    catch(e){ toast('เผยแพร่ขึ้นระบบไม่สำเร็จ — จะใช้โหมดรหัสคำตอบแทน',false); }
+    catch(e){ toast('เผยแพร่ออนไลน์ไม่สำเร็จ ใช้โหมดรหัสแทน',false); }
   }
   const link=respondLink(w, online);
   const closed=w.deadline&&Date.now()>w.deadline;
@@ -1089,7 +1115,7 @@ async function openShareLink(i){
       </div>
     </div>`);
 }
-function saveApi(){ setApiBase(document.getElementById('bApi').value); renderApiState(); renderHelp(); toast(API_BASE?'บันทึก Backend URL แล้ว':'ล้างค่าแล้ว (กลับเป็นโหมดออฟไลน์)'); }
+function saveApi(){ setApiBase(document.getElementById('bApi').value); renderApiState(); renderHelp(); toast(API_BASE?'บันทึก URL แล้ว':'ล้างค่าแล้ว (ออฟไลน์)'); }
 function renderApiState(){
   const inp=document.getElementById('bApi'); if(inp&&!inp.value) inp.value=API_BASE;
   const el=document.getElementById('apiState'); if(!el) return;
@@ -1169,8 +1195,8 @@ async function pullResponses(i){
       n++;
     });
     saveCustom(CUSTOM); rerenderAll(); closeModal();
-    toast(`ดึงคำตอบจากระบบแล้ว ${n} ท่าน`);
-  }catch(e){ toast('ดึงคำตอบไม่สำเร็จ: '+e.message,false); }
+    toast(`ดึงคำตอบแล้ว ${n} ท่าน`);
+  }catch(e){ toast('ดึงคำตอบไม่สำเร็จ',false); }
 }
 function importAnswers(i){
   const w=CUSTOM[i];
@@ -1207,7 +1233,7 @@ function openResults(i){
 }
 async function openLiveResults(i){
   const w=CUSTOM[i];
-  if(!API_BASE){ toast('ต้องเปิดโหมดออนไลน์ก่อนถึงจะดูผลสดได้ (ตั้ง Backend URL ด้านบน)',false); return; }
+  if(!API_BASE){ toast('ต้องเปิดโหมดออนไลน์ก่อน',false); return; }
   if(!w.sid){ w.sid='s'+Date.now().toString(36); saveCustom(CUSTOM); }
   try{ await apiPublishSurvey(w); }catch(e){ /* เผยแพร่ไม่สำเร็จ — ยังเปิดดูได้เผื่อเคยเผยแพร่ไว้ก่อนหน้าแล้ว */ }
   window.open(resultsLink(w),'_blank');
@@ -1393,7 +1419,7 @@ async function rspSubmit(){
       </div>`;
       loadSubmitResults(RSP.survey.sid, RSP.survey.api);
       return;
-    }catch(e){ toast('ส่งออนไลน์ไม่สำเร็จ ใช้รหัสคำตอบแทน',false); /* ตกไปใช้โหมดรหัสด้านล่าง */ }
+    }catch(e){ toast('ส่งออนไลน์ไม่สำเร็จ ใช้รหัสแทน',false); /* ตกไปใช้โหมดรหัสด้านล่าง */ }
   }
   // ===== offline mode: แสดงรหัสคำตอบให้ส่งกลับ =====
   const code=b64e({sid:RSP.survey.sid, no:RSP.no, ans});
@@ -1422,7 +1448,7 @@ function builderImportFile(ev){
       let rows;
       if(isCsv){ rows=parseCSV(e.target.result); }
       else {
-        if(typeof XLSX==='undefined'){ toast('ตัวอ่าน Excel ยังโหลดไม่เสร็จ ลองใหม่อีกครั้ง หรือใช้ไฟล์ CSV',false); return; }
+        if(typeof XLSX==='undefined'){ toast('ตัวอ่าน Excel ยังไม่พร้อม ลองใหม่หรือใช้ CSV',false); return; }
         const wb=XLSX.read(e.target.result,{type:'array'});
         const ws=wb.Sheets[wb.SheetNames[0]];
         rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
@@ -1450,7 +1476,7 @@ function ingestRows(rows, fname){
   const idx=name=>header.findIndex(h=>h.includes(name));
   const ci={act:idx('กิจกรรม'),when:idx('วันเวลา')>=0?idx('วันเวลา'):idx('เวลา'),where:idx('สถานที่'),
             no:idx('ลำดับ'),name:idx('ชื่อ'),position:idx('ตำแหน่ง'),status:idx('สถานะ'),week:idx('สัปดาห์')};
-  if(ci.act<0){ toast('ไม่พบคอลัมน์ “กิจกรรม” — ใช้รูปแบบเดียวกับไฟล์ส่งออก CSV',false); return; }
+  if(ci.act<0){ toast('ไม่พบคอลัมน์ “กิจกรรม” ในไฟล์',false); return; }
 
   // ขั้นที่ 1: เพิ่ม/อัปเดตรายชื่อผู้บริหาร (ชื่อ+ตำแหน่ง) จากไฟล์ ก่อนสร้างกิจกรรม
   let rosterResult={added:0,updated:0};
@@ -1579,6 +1605,8 @@ if(checkRespondRoute()){
   // content first (never depends on external libs), charts last (Chart.js via CDN)
   renderKPI(); renderThisWeek(); renderInsights(); renderMatrix(); renderWeekTabs(); renderWeek(); renderPeople();
   renderBuilder(); renderBuilderSaved(); renderApiState(); renderHelp(); renderAuthUI();
+  // ผู้เข้าชมทั่วไปเริ่มที่หน้ารายงานรายสัปดาห์ (สาธารณะ) · ผู้ดูแลที่เข้าสู่ระบบอยู่แล้วเริ่มที่ภาพรวม
+  nav(isAuthed()?'overview':'weekly');
   if(document.documentElement.classList.contains('dark')) document.getElementById('darkIcon').className='fa-solid fa-sun';
   function bootCharts(tries){ if(typeof Chart!=='undefined'){ renderCharts(); } else if((tries||0)<40){ setTimeout(()=>bootCharts((tries||0)+1),150); } }
   bootCharts();
